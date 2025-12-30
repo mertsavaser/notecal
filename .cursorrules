@@ -1,0 +1,11 @@
+## Project Intelligence (.cursorrules)
+
+- **Memory Bank**:
+  - Always read all `memory-bank/*.md` files at the start of a task.
+  - Keep `activeContext.md` and `progress.md` up to date after meaningful changes.
+- **Testing preference**:
+  - Do not skip or disable tests; fix root causes.
+  - Prefer providing injection points (e.g., overridable `home` widget) so tests can avoid hitting real Firebase while keeping production logic unchanged.
+- **Firebase**:
+  - Production Firebase logic (auth, Firestore, onboarding helpers) should not be modified solely to satisfy tests.
+

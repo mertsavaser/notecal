@@ -1,0 +1,25 @@
+{
+  "name": "firestore-migration",
+  "version": "1.0.0",
+  "description": "Firestore migration scripts for food data",
+  "main": "add_name_lowercase_to_foods.js",
+  "scripts": {
+    "migrate": "node add_name_lowercase_to_foods.js",
+    "translate": "node add_turkish_translations.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "@google-cloud/translate": "^8.0.0"
+  },
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
+
+
