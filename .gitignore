@@ -46,3 +46,8 @@ app.*.map.json
 
 # Firebase service account key (DO NOT COMMIT)
 serviceAccountKey.json
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
