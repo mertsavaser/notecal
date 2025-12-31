@@ -3,51 +3,143 @@
 *.log
 *.pyc
 *.swp
+*.swo
+*~
 .DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# IntelliJ related
+# Firebase / Google Services (DO NOT COMMIT - Contains API keys and credentials)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+serviceAccountKey.json
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Environment and local configuration
+.env
+.env.local
+.env.*.local
+android/local.properties
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/ephemeral/
+
+# IntelliJ / Android Studio
 *.iml
 *.ipr
 *.iws
 .idea/
+.idea_modules/
+*.hprof
+*.orig
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code
+.vscode/
+*.code-workspace
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Xcode
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.xcuserstate
+ios/.symlinks/
+ios/Pods/
+ios/.generated/
+*.xcworkspace
+!default.xcworkspace
+ios/Flutter/.last_build_id
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Flutter/Dart/Pub
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
 /coverage/
+**/doc/api/
 
-# Symbolication related
+# Symbolication
 app.*.symbols
 
-# Obfuscation related
+# Obfuscation
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Firebase service account key (DO NOT COMMIT)
-serviceAccountKey.json
+# Android / Gradle
+android/.gradle/
+android/captures/
+android/.idea/workspace.xml
+android/.idea/libraries
+android/.idea/modules.xml
+android/.idea/misc.xml
+android/.idea/runConfigurations.xml
+android/.idea/gradle.xml
+android/.idea/assetWizardSettings.xml
+android/.idea/caches
+android/.idea/modules
+android/app/build/
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/build/
+android/.externalNativeBuild
+android/.cxx
+android/app/.cxx
+*.apk
+*.ap_
+*.aab
+*.dex
+bin/
+gen/
+out/
+release/
+.gradle/
+hs_err_pid*.log
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # Node.js
 node_modules/
 npm-debug.log*
+yarn-debug.log*
 yarn-error.log*
+
+# Crash reports and debug files
+bugreport-*.zip
+*.crash
+*.dSYM.zip
+*.dSYM
+
+# Coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
