@@ -18,16 +18,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
     super.initState();
     // Check current user immediately
     final currentUser = FirebaseAuth.instance.currentUser;
-    print('[AuthWrapper] initState - currentUser: ${currentUser?.uid ?? "null"}');
+    debugPrint('[AuthWrapper] initState - currentUser: ${currentUser?.uid ?? "null"}');
   }
 
   @override
   Widget build(BuildContext context) {
-    print('[AuthWrapper] build() called');
+    debugPrint('[AuthWrapper] build() called');
     
     // Get current user immediately (for initial state)
     final currentUser = FirebaseAuth.instance.currentUser;
-    print('[AuthWrapper] build() - currentUser: ${currentUser?.uid ?? "null"}');
+    debugPrint('[AuthWrapper] build() - currentUser: ${currentUser?.uid ?? "null"}');
     
     return StreamBuilder<User?>(
       // Use a stable key that doesn't change on every build
@@ -40,14 +40,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
       initialData: currentUser,
       builder: (context, authSnapshot) {
         // Debug logging
-        print('[AuthWrapper] StreamBuilder rebuild - ConnectionState: ${authSnapshot.connectionState}');
-        print('[AuthWrapper] hasData: ${authSnapshot.hasData}, hasError: ${authSnapshot.hasError}');
-        print('[AuthWrapper] authSnapshot.data: ${authSnapshot.data?.uid ?? "null"}');
+        debugPrint('[AuthWrapper] StreamBuilder rebuild - ConnectionState: ${authSnapshot.connectionState}');
+        debugPrint('[AuthWrapper] hasData: ${authSnapshot.hasData}, hasError: ${authSnapshot.hasError}');
+        debugPrint('[AuthWrapper] authSnapshot.data: ${authSnapshot.data?.uid ?? "null"}');
         
         // During initial connection, show loading
         // This ensures we wait for the first event from the stream
         if (authSnapshot.connectionState == ConnectionState.waiting && !authSnapshot.hasData) {
-          print('[AuthWrapper] Waiting for auth state...');
+          debugPrint('[AuthWrapper] Waiting for auth state...');
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -60,12 +60,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
         // No user logged in → show LoginScreen
         if (user == null) {
-          print('[AuthWrapper] No user - showing LoginScreen');
+          debugPrint('[AuthWrapper] No user - showing LoginScreen');
           return const LoginScreen();
         }
 
         // User is logged in → check profile status
-        print('[AuthWrapper] User logged in (${user.uid}) - checking profile');
+        debugPrint('[AuthWrapper] User logged in (${user.uid}) - checking profile');
         return _ProfileChecker(uid: user.uid);
       },
     );
@@ -87,7 +87,7 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
   @override
   void initState() {
     super.initState();
-    print('[ProfileChecker] initState - UID: ${widget.uid}');
+    debugPrint('[ProfileChecker] initState - UID: ${widget.uid}');
     _profileCheckFuture = _checkProfileComplete();
   }
 
@@ -96,7 +96,7 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
     super.didUpdateWidget(oldWidget);
     // Re-check if UID changes (shouldn't happen, but safety check)
     if (oldWidget.uid != widget.uid) {
-      print('[ProfileChecker] UID changed from ${oldWidget.uid} to ${widget.uid} - rechecking');
+      debugPrint('[ProfileChecker] UID changed from ${oldWidget.uid} to ${widget.uid} - rechecking');
       setState(() {
         _profileCheckFuture = _checkProfileComplete();
       });
@@ -106,18 +106,18 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
   /// Check if user profile is complete (has required fields)
   Future<bool> _checkProfileComplete() async {
     try {
-      print('[ProfileChecker] Checking profile completeness for UID: ${widget.uid}');
+      debugPrint('[ProfileChecker] Checking profile completeness for UID: ${widget.uid}');
       final isComplete = await FirestoreHelper.checkUserProfileComplete(widget.uid);
-      print('[ProfileChecker] exists: $isComplete');
+      debugPrint('[ProfileChecker] exists: $isComplete');
       return isComplete;
     } catch (e) {
-      print('[ProfileChecker] Error checking profile: $e');
+      debugPrint('[ProfileChecker] Error checking profile: $e');
       return false;
     }
   }
 
   void _refreshProfile() {
-    print('[ProfileChecker] Refreshing profile check...');
+    debugPrint('[ProfileChecker] Refreshing profile check...');
     setState(() {
       _profileCheckFuture = _checkProfileComplete();
     });
@@ -129,16 +129,16 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
       future: _profileCheckFuture,
       builder: (context, snapshot) {
         // Debug logging
-        print('[ProfileChecker] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
-        print('[ProfileChecker] hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
+        debugPrint('[ProfileChecker] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
+        debugPrint('[ProfileChecker] hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
         
         if (snapshot.hasError) {
-          print('[ProfileChecker] Error: ${snapshot.error}');
+          debugPrint('[ProfileChecker] Error: ${snapshot.error}');
         }
 
         // Show loading while checking profile
         if (snapshot.connectionState == ConnectionState.waiting) {
-          print('[ProfileChecker] Checking profile existence...');
+          debugPrint('[ProfileChecker] Checking profile existence...');
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -148,7 +148,7 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
 
         // Handle errors - assume profile doesn't exist
         if (snapshot.hasError || !snapshot.hasData) {
-          print('[ProfileChecker] Profile check failed or no data - showing ProfileSetupScreen');
+          debugPrint('[ProfileChecker] Profile check failed or no data - showing ProfileSetupScreen');
           return ProfileSetupScreen(
             key: ValueKey(widget.uid),
             onProfileSaved: _refreshProfile,
@@ -156,16 +156,16 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
         }
 
         final profileExists = snapshot.data!;
-        print('[ProfileChecker] exists: $profileExists');
+        debugPrint('[ProfileChecker] exists: $profileExists');
 
         // Profile exists → show HomeScreen
         if (profileExists) {
-          print('[ProfileChecker] Profile complete - showing HomeScreen');
+          debugPrint('[ProfileChecker] Profile complete - showing HomeScreen');
           return const HomeScreen();
         }
 
         // Profile does NOT exist → show SetupProfileScreen
-        print('[ProfileChecker] Profile incomplete - showing ProfileSetupScreen');
+        debugPrint('[ProfileChecker] Profile incomplete - showing ProfileSetupScreen');
         return ProfileSetupScreen(
           key: ValueKey(widget.uid),
           onProfileSaved: _refreshProfile,

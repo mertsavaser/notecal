@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } catch (e) {
-      print('[HomeScreen] Error loading macro targets: $e');
+      debugPrint('[HomeScreen] Error loading macro targets: $e');
     }
   }
 
@@ -238,21 +238,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _signOut(BuildContext context) async {
     try {
-      print('[HomeScreen] Signing out user...');
+      debugPrint('[HomeScreen] Signing out user...');
       
       await FirebaseAuth.instance.signOut();
       
       try {
         final GoogleSignIn googleSignIn = GoogleSignIn();
         await googleSignIn.signOut();
-        print('[HomeScreen] Google Sign-In signed out');
+        debugPrint('[HomeScreen] Google Sign-In signed out');
       } catch (e) {
-        print('[HomeScreen] Google Sign-In sign out error (ignored): $e');
+        debugPrint('[HomeScreen] Google Sign-In sign out error (ignored): $e');
       }
       
-      print('[HomeScreen] Sign out complete - AuthWrapper will handle navigation');
+      debugPrint('[HomeScreen] Sign out complete - AuthWrapper will handle navigation');
     } catch (e) {
-      print('[HomeScreen] Error signing out: $e');
+      debugPrint('[HomeScreen] Error signing out: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -484,7 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             'No meals yet',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600]?.withOpacity(0.8),
+                              color: Colors.grey[600]?.withValues(alpha: 0.8),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -493,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             'Tap "Add Meal" to create a custom meal',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[500]?.withOpacity(0.7),
+                              color: Colors.grey[500]?.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -547,12 +547,12 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -635,13 +635,13 @@ class _HomeScreenState extends State<HomeScreen> {
           label,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey[600]?.withOpacity(0.8),
+            color: Colors.grey[600]?.withValues(alpha: 0.8),
             fontWeight: FontWeight.w500,
           ),
         ),
         Text(
           target != null ? '$consumed / $target g' : '$consumed g',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
             color: Colors.black87,
             fontWeight: FontWeight.w600,
@@ -660,7 +660,7 @@ class _HomeScreenState extends State<HomeScreen> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600]?.withOpacity(0.7),
+            color: Colors.grey[600]?.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
             letterSpacing: 0.2,
           ),
@@ -688,7 +688,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final mealName = meal['name'] as String?;
     if (mealName == null || mealName.trim().isEmpty) {
       // This should never happen with proper guards, but handle gracefully
-      print('[HomeScreen] Warning: Meal $mealId has no name');
+      debugPrint('[HomeScreen] Warning: Meal $mealId has no name');
       return const SizedBox.shrink(); // Skip rendering meals without names
     }
     final mealCalories = _calculateTotalCalories(foods);
@@ -703,12 +703,12 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 14,
             offset: const Offset(0, 3),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 6,
             offset: const Offset(0, 1),
           ),
@@ -736,7 +736,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     '${mealCalories.round()} cal',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Colors.black87,
@@ -744,7 +744,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 12),
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, color: Colors.grey[600]?.withOpacity(0.7), size: 20),
+                    icon: Icon(Icons.more_vert, color: Colors.grey[600]?.withValues(alpha: 0.7), size: 20),
                     onSelected: (value) {
                       if (value == 'rename') {
                         _showRenameMealDialog(context, mealId, mealName);
@@ -787,7 +787,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'P: ${mealProtein.round()}g   C: ${mealCarbs.round()}g   F: ${mealFat.round()}g',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600]?.withOpacity(0.7),
+                color: Colors.grey[600]?.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.3,
               ),
@@ -804,7 +804,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Add your first food',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600]?.withOpacity(0.7),
+                  color: Colors.grey[600]?.withValues(alpha: 0.7),
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -819,7 +819,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child:                     Text(
                       food['name'] ?? 'Unknown',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.black87,
@@ -830,7 +830,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       '${((food['calories'] as num?)?.toDouble() ?? 0.0).round()} cal',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600]?.withOpacity(0.8),
+                        color: Colors.grey[600]?.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -853,7 +853,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                side: BorderSide(color: Colors.grey[300]!.withOpacity(0.6)),
+                side: BorderSide(color: Colors.grey[300]!.withValues(alpha: 0.6)),
               ),
             ),
           ),

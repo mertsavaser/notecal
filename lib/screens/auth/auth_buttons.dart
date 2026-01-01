@@ -77,16 +77,16 @@ class AppleAuthButton extends StatelessWidget {
           ),
           backgroundColor: Colors.white,
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.apple,
               size: 24,
               color: Color(0xFF1A1A1A),
             ),
-            const SizedBox(width: 12),
-            const Text(
+            SizedBox(width: 12),
+            Text(
               'Continue with Apple',
               style: TextStyle(
                 fontSize: 16,

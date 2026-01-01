@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 class OnboardingHelper {
   static const String _onboardingCompletedKey = 'onboarding_completed';
@@ -7,25 +8,25 @@ class OnboardingHelper {
   /// Check if onboarding has been completed
   static Future<bool> isOnboardingCompleted() async {
     try {
-      print('[OnboardingHelper] Starting SharedPreferences check...');
+      debugPrint('[OnboardingHelper] Starting SharedPreferences check...');
       // Add timeout to prevent hanging
       final prefs = await SharedPreferences.getInstance()
           .timeout(
             const Duration(seconds: 5),
             onTimeout: () {
-              print('[OnboardingHelper] WARNING: SharedPreferences timeout');
+              debugPrint('[OnboardingHelper] WARNING: SharedPreferences timeout');
               throw TimeoutException('SharedPreferences timeout', const Duration(seconds: 5));
             },
           );
-      print('[OnboardingHelper] SharedPreferences instance obtained');
+      debugPrint('[OnboardingHelper] SharedPreferences instance obtained');
       final result = prefs.getBool(_onboardingCompletedKey) ?? false;
-      print('[OnboardingHelper] Onboarding check completed: $result');
+      debugPrint('[OnboardingHelper] Onboarding check completed: $result');
       return result;
     } on TimeoutException {
-      print('[OnboardingHelper] Timeout - assuming onboarding not completed');
+      debugPrint('[OnboardingHelper] Timeout - assuming onboarding not completed');
       return false;
     } catch (e) {
-      print('[OnboardingHelper] Error checking onboarding: $e');
+      debugPrint('[OnboardingHelper] Error checking onboarding: $e');
       // On error, assume onboarding not completed (show onboarding)
       return false;
     }

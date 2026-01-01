@@ -68,7 +68,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         }
       }
     } catch (e) {
-      print('[ProgressScreen] Error loading targets: $e');
+      debugPrint('[ProgressScreen] Error loading targets: $e');
     }
   }
 
@@ -322,12 +322,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -339,7 +339,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         _weekOffset == 0 ? 'Weekly Score' : 'Week Score',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600]?.withOpacity(0.7),
+                          color: Colors.grey[600]?.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.3,
                         ),
@@ -359,7 +359,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         message,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600]?.withOpacity(0.8),
+                          color: Colors.grey[600]?.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w400,
                         ),
                         textAlign: TextAlign.center,
@@ -379,7 +379,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 children: [
                   Text(
                     _weekOffset == 0 ? 'This Week' : 'Week',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
@@ -427,15 +427,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           borderRadius: BorderRadius.circular(16),
                           border: isToday
                               ? Border.all(color: Colors.blue, width: 2)
-                              : Border.all(color: Colors.grey[200]!.withOpacity(0.3)),
+                              : Border.all(color: Colors.grey[200]!.withValues(alpha: 0.3)),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
+                              color: Colors.black.withValues(alpha: 0.06),
                               blurRadius: 12,
                               offset: const Offset(0, 2),
                             ),
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
+                              color: Colors.black.withValues(alpha: 0.03),
                               blurRadius: 4,
                               offset: const Offset(0, 1),
                             ),
@@ -493,8 +493,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: calories > 0
-                                              ? Colors.grey[600]?.withOpacity(0.8)
-                                              : Colors.grey[500]?.withOpacity(0.6),
+                                              ? Colors.grey[600]?.withValues(alpha: 0.8)
+                                              : Colors.grey[500]?.withValues(alpha: 0.6),
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -695,10 +695,10 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[200]!.withOpacity(0.3)),
+                        border: Border.all(color: Colors.grey[200]!.withValues(alpha: 0.3)),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),

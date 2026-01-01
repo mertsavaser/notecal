@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 
 /// Configure Firestore to use a specific database
 /// 
@@ -35,11 +36,11 @@ bool isFirestoreEmulatorEnabled() {
 /// Print Firestore connection debug info
 void printFirestoreDebugInfo() {
   final firestore = FirebaseFirestore.instance;
-  print('[FirestoreConfig] Project ID: ${firestore.app.options.projectId}');
-  print('[FirestoreConfig] Database: (default)');
-  print('[FirestoreConfig] Host: ${firestore.settings.host}');
-  print('[FirestoreConfig] SSL Enabled: ${firestore.settings.sslEnabled}');
-  print('[FirestoreConfig] Emulator Enabled: ${isFirestoreEmulatorEnabled()}');
+  debugPrint('[FirestoreConfig] Project ID: ${firestore.app.options.projectId}');
+  debugPrint('[FirestoreConfig] Database: (default)');
+  debugPrint('[FirestoreConfig] Host: ${firestore.settings.host}');
+  debugPrint('[FirestoreConfig] SSL Enabled: ${firestore.settings.sslEnabled}');
+  debugPrint('[FirestoreConfig] Emulator Enabled: ${isFirestoreEmulatorEnabled()}');
 }
 
 

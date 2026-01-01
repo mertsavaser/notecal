@@ -97,7 +97,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     } catch (e) {
-      print('[EditProfileScreen] Error loading profile: $e');
+      debugPrint('[EditProfileScreen] Error loading profile: $e');
       if (mounted) {
         setState(() {
           _isLoadingProfile = false;

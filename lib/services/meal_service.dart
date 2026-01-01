@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 /// Service class for managing meals and foods in Firestore.
 /// 
@@ -103,7 +104,7 @@ class MealService {
       }
       return true;
     } catch (e) {
-      print('[MealService] Error ensuring system meals: $e');
+      debugPrint('[MealService] Error ensuring system meals: $e');
       return false;
     }
   }
@@ -142,7 +143,7 @@ class MealService {
 
       return mealRef.id;
     } catch (e) {
-      print('[MealService] Error creating custom meal: $e');
+      debugPrint('[MealService] Error creating custom meal: $e');
       return null;
     }
   }
@@ -170,7 +171,7 @@ class MealService {
       
       return false; // No duplicate
     } catch (e) {
-      print('[MealService] Error checking duplicate meal name: $e');
+      debugPrint('[MealService] Error checking duplicate meal name: $e');
       return false;
     }
   }
@@ -202,7 +203,7 @@ class MealService {
 
       return true;
     } catch (e) {
-      print('[MealService] Error renaming meal: $e');
+      debugPrint('[MealService] Error renaming meal: $e');
       return false;
     }
   }
@@ -229,7 +230,7 @@ class MealService {
 
       return true;
     } catch (e) {
-      print('[MealService] Error deleting meal: $e');
+      debugPrint('[MealService] Error deleting meal: $e');
       return false;
     }
   }
@@ -240,7 +241,7 @@ class MealService {
       final foodsSnapshot = await _foodsCollectionRef(date, mealId).get();
       return foodsSnapshot.docs.length;
     } catch (e) {
-      print('[MealService] Error getting meal food count: $e');
+      debugPrint('[MealService] Error getting meal food count: $e');
       return 0;
     }
   }
@@ -268,7 +269,7 @@ class MealService {
       // Verify meal exists
       final mealDoc = await _mealDocRef(date, mealId).get();
       if (!mealDoc.exists) {
-        print('[MealService] Meal $mealId does not exist for date $date');
+        debugPrint('[MealService] Meal $mealId does not exist for date $date');
         return null;
       }
       
@@ -276,7 +277,7 @@ class MealService {
       final mealData = mealDoc.data() as Map<String, dynamic>?;
       final mealName = mealData?['name']?.toString().trim();
       if (mealName == null || mealName.isEmpty) {
-        print('[MealService] Meal $mealId has no name, cannot add food');
+        debugPrint('[MealService] Meal $mealId has no name, cannot add food');
         return null;
       }
 
@@ -297,7 +298,7 @@ class MealService {
 
       return foodRef.id;
     } catch (e) {
-      print('[MealService] Error adding food: $e');
+      debugPrint('[MealService] Error adding food: $e');
       return null;
     }
   }
@@ -327,7 +328,7 @@ class MealService {
         }).toList();
       });
     } catch (e) {
-      print('[MealService] Error getting meal foods stream: $e');
+      debugPrint('[MealService] Error getting meal foods stream: $e');
       return Stream.value([]);
     }
   }
@@ -373,7 +374,7 @@ class MealService {
             }
             // If still empty, skip this meal (shouldn't happen with guards)
             if (mealName.isEmpty) {
-              print('[MealService] Warning: Meal $mealId has no name, skipping');
+              debugPrint('[MealService] Warning: Meal $mealId has no name, skipping');
               return null;
             }
           }
@@ -439,7 +440,7 @@ class MealService {
         return [...systemMeals, ...customMeals];
       });
     } catch (e) {
-      print('[MealService] Error getting day meals stream: $e');
+      debugPrint('[MealService] Error getting day meals stream: $e');
       return Stream.value([]);
     }
   }
@@ -451,7 +452,7 @@ class MealService {
       await _updateDailySummary(date);
       return true;
     } catch (e) {
-      print('[MealService] Error deleting food: $e');
+      debugPrint('[MealService] Error deleting food: $e');
       return false;
     }
   }
@@ -497,7 +498,7 @@ class MealService {
         },
       }, SetOptions(merge: true));
     } catch (e) {
-      print('[MealService] Error updating daily summary: $e');
+      debugPrint('[MealService] Error updating daily summary: $e');
     }
   }
 
@@ -514,7 +515,7 @@ class MealService {
       final data = dayDoc.data() as Map<String, dynamic>?;
       return data?['summary'] as Map<String, dynamic>?;
     } catch (e) {
-      print('[MealService] Error getting daily summary: $e');
+      debugPrint('[MealService] Error getting daily summary: $e');
       return null;
     }
   }
@@ -548,7 +549,7 @@ class MealService {
       dates.sort((a, b) => b.compareTo(a));
       return dates;
     } catch (e) {
-      print('[MealService] Error getting history dates: $e');
+      debugPrint('[MealService] Error getting history dates: $e');
       return [];
     }
   }
