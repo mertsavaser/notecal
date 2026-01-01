@@ -120,28 +120,28 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      print('[Google Sign-In] Starting authentication flow...');
+      debugPrint('[Google Sign-In] Starting authentication flow...');
 
       // Initialize Google Sign-In instance
       final GoogleSignIn googleSignIn = GoogleSignIn();
       
       // Trigger the Google Sign-In flow
-      print('[Google Sign-In] Requesting user sign-in...');
+      debugPrint('[Google Sign-In] Requesting user sign-in...');
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
         // User canceled the sign-in
-        print('[Google Sign-In] User canceled the sign-in');
+        debugPrint('[Google Sign-In] User canceled the sign-in');
         setState(() {
           _isLoading = false;
         });
         return null;
       }
 
-      print('[Google Sign-In] User signed in: ${googleUser.email}');
+      debugPrint('[Google Sign-In] User signed in: ${googleUser.email}');
 
       // Obtain the auth details from the request
-      print('[Google Sign-In] Obtaining authentication credentials...');
+      debugPrint('[Google Sign-In] Obtaining authentication credentials...');
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
@@ -153,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
-      print('[Google Sign-In] Creating Firebase credential...');
+      debugPrint('[Google Sign-In] Creating Firebase credential...');
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -162,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Sign in to Firebase with the Google credential
-      print('[Google Sign-In] Signing in to Firebase...');
+      debugPrint('[Google Sign-In] Signing in to Firebase...');
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
 
@@ -170,31 +170,31 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Firebase sign-in returned null user');
       }
 
-      print('[Google Sign-In] Successfully signed in: ${userCredential.user!.uid}');
+      debugPrint('[Google Sign-In] Successfully signed in: ${userCredential.user!.uid}');
 
       // Check if this is a new user and create base Firestore document
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        print('[Google Sign-In] New user detected, creating Firestore document...');
+        debugPrint('[Google Sign-In] New user detected, creating Firestore document...');
         try {
           await FirestoreHelper.createBaseUserDocument(
             userCredential.user!.uid,
             userCredential.user!.email ?? '',
           );
-          print('[Google Sign-In] Firestore document created successfully');
+          debugPrint('[Google Sign-In] Firestore document created successfully');
         } catch (e) {
-          print('[Google Sign-In] Error creating Firestore document: $e');
+          debugPrint('[Google Sign-In] Error creating Firestore document: $e');
           // Continue even if Firestore fails - user is still authenticated
         }
       }
 
       // Navigation is handled automatically by AuthWrapper
-      print('[Google Sign-In] Authentication complete');
+      debugPrint('[Google Sign-In] Authentication complete');
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      print('[Google Sign-In] Firebase Auth Error:');
-      print('  Code: ${e.code}');
-      print('  Message: ${e.message}');
-      print('  Details: ${e.toString()}');
+      debugPrint('[Google Sign-In] Firebase Auth Error:');
+      debugPrint('  Code: ${e.code}');
+      debugPrint('  Message: ${e.message}');
+      debugPrint('  Details: ${e.toString()}');
 
       String errorMessage = 'Google Sign-In failed';
       
@@ -229,13 +229,13 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       return null;
     } catch (e) {
-      print('[Google Sign-In] General Error:');
-      print('  Type: ${e.runtimeType}');
-      print('  Message: ${e.toString()}');
+      debugPrint('[Google Sign-In] General Error:');
+      debugPrint('  Type: ${e.runtimeType}');
+      debugPrint('  Message: ${e.toString()}');
       if (e is PlatformException) {
-        print('Error: ${e.message}');
-        print('  Code: ${e.code}');
-        print('  Details: ${e.details}');
+        debugPrint('Error: ${e.message}');
+        debugPrint('  Code: ${e.code}');
+        debugPrint('  Details: ${e.details}');
       }
 
       String errorMessage = 'Google Sign-In failed: ${e.toString()}';
@@ -332,7 +332,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('[LoginScreen] build() called');
+    debugPrint('[LoginScreen] build() called');
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
