@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.2.3 <4.0.0"
+  sdk: ">=3.4.0 <4.0.0"
   flutter: ">=3.16.0"
 
 # Dependencies specify other packages that your package needs in order to work.
@@ -37,9 +37,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   video_player: ^2.8.7
   smooth_page_indicator: ^1.2.0+3
-  firebase_core: ^3.5.0
-  firebase_auth: ^5.1.0
-  cloud_firestore: ^5.0.2
+  firebase_core: 3.6.0
+  firebase_core_web: 2.18.1
+  firebase_auth: 5.3.1
+  cloud_firestore: 5.4.0
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^5.0.0
   shared_preferences: ^2.2.3
