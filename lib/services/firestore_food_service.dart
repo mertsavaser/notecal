@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 
 class FirestoreFoodService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -25,12 +24,12 @@ class FirestoreFoodService {
         return parsed;
       }
       // Log malformed string value
-      debugPrint('[DEBUG] Warning: Failed to parse String to double: "$value", using default: $defaultValue');
+      print('[DEBUG] Warning: Failed to parse String to double: "$value", using default: $defaultValue');
       return defaultValue;
     }
     
     // Log unexpected type
-    debugPrint('[DEBUG] Warning: Unexpected type for numeric field: ${value.runtimeType}, value: $value, using default: $defaultValue');
+    print('[DEBUG] Warning: Unexpected type for numeric field: ${value.runtimeType}, value: $value, using default: $defaultValue');
     return defaultValue;
   }
 
@@ -47,7 +46,7 @@ class FirestoreFoodService {
     final lowerQuery = query.toLowerCase().trim();
     
     // DEBUG: Print search query
-    debugPrint('[DEBUG] Search query: "$lowerQuery"');
+    print('[DEBUG] Search query: "$lowerQuery"');
 
     try {
       // Use orderBy with startAt/endAt for prefix search
@@ -56,11 +55,11 @@ class FirestoreFoodService {
           .collection('foods')
           .orderBy('name_lowercase')
           .startAt([lowerQuery])
-          .endAt(['$lowerQuery\uf8ff'])
+          .endAt([lowerQuery + '\uf8ff'])
           .limit(20)
           .get();
 
-      debugPrint('[DEBUG] Found ${querySnapshot.docs.length} documents');
+      print('[DEBUG] Found ${querySnapshot.docs.length} documents');
       
       // DEBUG: Print first 3 documents' name_lowercase
       final results = <Map<String, dynamic>>[];
@@ -91,24 +90,24 @@ class FirestoreFoodService {
           });
         } catch (e) {
           // Log malformed document but continue processing others
-          debugPrint('[DEBUG] Warning: Failed to parse document ${doc.id}: $e');
-          debugPrint('[DEBUG] Document data: ${doc.data()}');
+          print('[DEBUG] Warning: Failed to parse document ${doc.id}: $e');
+          print('[DEBUG] Document data: ${doc.data()}');
         }
       }
       
       // DEBUG: Print first 3 name_lowercase values
       for (int i = 0; i < results.length && i < 3; i++) {
-        debugPrint('[DEBUG] Result ${i + 1} name_lowercase: "${results[i]['name_lowercase']}"');
+        print('[DEBUG] Result ${i + 1} name_lowercase: "${results[i]['name_lowercase']}"');
       }
       
       return results;
     } catch (e, stackTrace) {
-      debugPrint('[DEBUG] Error searching foods: $e');
-      debugPrint('[DEBUG] Stack trace: $stackTrace');
+      print('[DEBUG] Error searching foods: $e');
+      print('[DEBUG] Stack trace: $stackTrace');
       
       // Check if error is about missing index
       if (e.toString().contains('index') || e.toString().contains('Index')) {
-        debugPrint('[DEBUG] Firestore index required! Create index: Collection=foods, Field=name_lowercase (Ascending)');
+        print('[DEBUG] Firestore index required! Create index: Collection=foods, Field=name_lowercase (Ascending)');
       }
       
       return [];
@@ -127,7 +126,7 @@ class FirestoreFoodService {
       }
       return null;
     } catch (e) {
-      debugPrint('Error getting food: $e');
+      print('Error getting food: $e');
       return null;
     }
   }
@@ -145,7 +144,7 @@ class FirestoreFoodService {
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
-      debugPrint('User not authenticated');
+      print('User not authenticated');
       return false;
     }
 
@@ -170,7 +169,7 @@ class FirestoreFoodService {
 
       return true;
     } catch (e) {
-      debugPrint('Error adding food to meal: $e');
+      print('Error adding food to meal: $e');
       return false;
     }
   }

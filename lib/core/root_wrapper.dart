@@ -22,12 +22,12 @@ class _RootWrapperState extends State<RootWrapper> {
 
   void _checkOnboardingStatus() {
     if (!_hasInitialized) {
-      debugPrint('[RootWrapper] Starting onboarding check...');
+      print('[RootWrapper] Starting onboarding check...');
       final future = OnboardingHelper.isOnboardingCompleted();
       future.then((value) {
-        debugPrint('[RootWrapper] Onboarding check future completed: $value');
+        print('[RootWrapper] Onboarding check future completed: $value');
       }).catchError((error) {
-        debugPrint('[RootWrapper] Onboarding check future error: $error');
+        print('[RootWrapper] Onboarding check future error: $error');
       });
       setState(() {
         _onboardingCheckFuture = future;
@@ -38,11 +38,11 @@ class _RootWrapperState extends State<RootWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[RootWrapper] build() called');
+    print('[RootWrapper] build() called');
     
     // Initialize if not done yet
     if (_onboardingCheckFuture == null) {
-      debugPrint('[RootWrapper] Initializing onboarding check...');
+      print('[RootWrapper] Initializing onboarding check...');
       _checkOnboardingStatus();
       return const Scaffold(
         body: Center(
@@ -54,12 +54,12 @@ class _RootWrapperState extends State<RootWrapper> {
     return FutureBuilder<bool>(
       future: _onboardingCheckFuture,
       builder: (context, snapshot) {
-        debugPrint('[RootWrapper] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
-        debugPrint('[RootWrapper] FutureBuilder - hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
+        print('[RootWrapper] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
+        print('[RootWrapper] FutureBuilder - hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
         
         // Show loading while checking onboarding status
         if (snapshot.connectionState == ConnectionState.waiting) {
-          debugPrint('[RootWrapper] Waiting for onboarding check...');
+          print('[RootWrapper] Waiting for onboarding check...');
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -69,16 +69,16 @@ class _RootWrapperState extends State<RootWrapper> {
 
         // On error, assume onboarding not completed (show onboarding)
         final isCompleted = snapshot.data ?? false;
-        debugPrint('[RootWrapper] Onboarding completed: $isCompleted');
+        print('[RootWrapper] Onboarding completed: $isCompleted');
 
         // Onboarding completed → go to AuthWrapper
         if (isCompleted) {
-          debugPrint('[RootWrapper] Showing AuthWrapper');
+          print('[RootWrapper] Showing AuthWrapper');
           return const AuthWrapper();
         }
 
         // Onboarding NOT completed → show OnboardingScreen
-        debugPrint('[RootWrapper] Showing OnboardingScreen');
+        print('[RootWrapper] Showing OnboardingScreen');
         return const OnboardingScreen();
       },
     );

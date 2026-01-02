@@ -11,33 +11,33 @@ void main() async {
   // Initialize Firebase and wait for completion
   try {
     final app = await Firebase.initializeApp();
-    debugPrint('[INIT] Firebase initialized');
+    print('[INIT] Firebase initialized');
     
     // Debug: Print Firebase app options
-    debugPrint('[INIT] Firebase App Name: ${app.name}');
-    debugPrint('[INIT] Firebase Project ID: ${app.options.projectId}');
-    debugPrint('[INIT] Firebase API Key: ${app.options.apiKey}');
-    debugPrint('[INIT] Firebase App ID: ${app.options.appId}');
+    print('[INIT] Firebase App Name: ${app.name}');
+    print('[INIT] Firebase Project ID: ${app.options.projectId}');
+    print('[INIT] Firebase API Key: ${app.options.apiKey}');
+    print('[INIT] Firebase App ID: ${app.options.appId}');
     
     // Debug: Print Firestore instance info
     final firestore = FirebaseFirestore.instance;
-    debugPrint('[INIT] Firestore Instance: ${firestore.app.name}');
-    debugPrint('[INIT] Firestore Database ID: ${firestore.app.options.projectId}');
+    print('[INIT] Firestore Instance: ${firestore.app.name}');
+    print('[INIT] Firestore Database ID: ${firestore.app.options.projectId}');
     
     // Check if using emulator
     final settings = firestore.settings;
-    debugPrint('[INIT] Firestore Host: ${settings.host}');
-    debugPrint('[INIT] Firestore SSL Enabled: ${settings.sslEnabled}');
-    debugPrint('[INIT] Firestore Persistence Enabled: ${settings.cacheSizeBytes != 0}');
+    print('[INIT] Firestore Host: ${settings.host}');
+    print('[INIT] Firestore SSL Enabled: ${settings.sslEnabled}');
+    print('[INIT] Firestore Persistence Enabled: ${settings.cacheSizeBytes != 0}');
     
     // Verify Firebase Auth is ready
     final auth = FirebaseAuth.instance;
-    debugPrint('[INIT] Firebase Auth instance ready');
-    debugPrint('[INIT] Current user after init: ${auth.currentUser?.uid ?? "null"}');
+    print('[INIT] Firebase Auth instance ready');
+    print('[INIT] Current user after init: ${auth.currentUser?.uid ?? "null"}');
     
     runApp(const NotecalApp());
   } catch (e) {
-    debugPrint('[INIT] Firebase initialization error: $e');
+    print('[INIT] Firebase initialization error: $e');
     // Still run the app even if initialization has issues
     runApp(const NotecalApp());
   }

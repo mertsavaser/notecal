@@ -25,9 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final MealService _mealService = MealService();
-  
-  // Daily calorie target (loaded from user profile TDEE)
-  double? _dailyCalorieTarget;
+  final int dailyCalorieTarget = 2000;
 
   // Macro targets (loaded from user profile)
   double? _proteinTarget;
@@ -46,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadMacroTargets();
   }
 
-  /// Load macro targets and daily calorie target from user profile
+  /// Load macro targets from user profile
   /// Targets are calculated from TDEE: 30% protein, 40% carbs, 30% fat
   Future<void> _loadMacroTargets() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -64,8 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
         
         if (tdee != null) {
           setState(() {
-            // Set daily calorie target from TDEE
-            _dailyCalorieTarget = tdee;
             // Protein: 30% of calories, 4 calories per gram
             _proteinTarget = (tdee * 0.30) / 4;
             // Carbs: 40% of calories, 4 calories per gram
@@ -76,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } catch (e) {
-      debugPrint('[HomeScreen] Error loading macro targets: $e');
+      print('[HomeScreen] Error loading macro targets: $e');
     }
   }
 
@@ -238,21 +234,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _signOut(BuildContext context) async {
     try {
-      debugPrint('[HomeScreen] Signing out user...');
+      print('[HomeScreen] Signing out user...');
       
       await FirebaseAuth.instance.signOut();
       
       try {
         final GoogleSignIn googleSignIn = GoogleSignIn();
         await googleSignIn.signOut();
-        debugPrint('[HomeScreen] Google Sign-In signed out');
+        print('[HomeScreen] Google Sign-In signed out');
       } catch (e) {
-        debugPrint('[HomeScreen] Google Sign-In sign out error (ignored): $e');
+        print('[HomeScreen] Google Sign-In sign out error (ignored): $e');
       }
       
-      debugPrint('[HomeScreen] Sign out complete - AuthWrapper will handle navigation');
+      print('[HomeScreen] Sign out complete - AuthWrapper will handle navigation');
     } catch (e) {
-      debugPrint('[HomeScreen] Error signing out: $e');
+      print('[HomeScreen] Error signing out: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -311,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: Colors.white,
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
@@ -322,10 +318,6 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _currentIndex = index;
           });
-          // Reload targets when switching back to home tab (in case profile was updated)
-          if (index == 0) {
-            _loadMacroTargets();
-          }
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.blue,
@@ -368,12 +360,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.logout, color: Colors.grey[700]),
+                  icon: const Icon(Icons.logout, color: Colors.black),
                   onPressed: () => _signOut(context),
                 ),
               ],
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
             
             // Daily Summary Card (with StreamBuilder for real-time updates)
             StreamBuilder<Map<String, dynamic>?>(
@@ -416,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             
             // Meals Section Header
             Row(
@@ -427,13 +419,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                    letterSpacing: 0.5,
+                    color: Colors.black,
                   ),
                 ),
                 TextButton.icon(
                   onPressed: _showAddMealBottomSheet,
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: const Icon(Icons.add, size: 20),
                   label: const Text(
                     'Add Meal',
                     style: TextStyle(
@@ -444,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             
             // Meal Cards (with StreamBuilder for real-time updates)
             // Meals are already sorted by MealService: Breakfast, Lunch, Dinner, then custom meals
@@ -484,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             'No meals yet',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey[600]?.withValues(alpha: 0.8),
+                              color: Colors.grey[600],
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -493,7 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             'Tap "Add Meal" to create a custom meal',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[500]?.withValues(alpha: 0.7),
+                              color: Colors.grey[500],
                             ),
                           ),
                         ],
@@ -511,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return const SizedBox.shrink();
                     }
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0),
+                      padding: const EdgeInsets.only(bottom: 16.0),
                       child: _buildMealCard(meal, foods),
                     );
                   }).toList(),
@@ -533,28 +524,21 @@ class _HomeScreenState extends State<HomeScreen> {
     double consumedCarbs,
     double consumedFat,
   ) {
-    // Use TDEE from user profile, fallback to 2000 if not loaded yet
-    final target = _dailyCalorieTarget ?? 2000.0;
-    final remainingCalories = target - consumedCalories.round();
-    final progress = target > 0
-        ? (consumedCalories / target).clamp(0.0, 1.0)
+    final remainingCalories = dailyCalorieTarget - consumedCalories.round();
+    final progress = dailyCalorieTarget > 0
+        ? (consumedCalories / dailyCalorieTarget).clamp(0.0, 1.0)
         : 0.0;
 
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBFE), // Very subtle warm white tint
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 16,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
             offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -564,31 +548,30 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text(
             'Daily Summary',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
-              letterSpacing: 0.2,
+              color: Colors.black,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
           // Progress Bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 14,
-              backgroundColor: Colors.grey[200],
+              minHeight: 12,
+              backgroundColor: Colors.grey[300],
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
           // Calorie Stats
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildCalorieStat('Target', target.round().toString()),
+              _buildCalorieStat('Target', dailyCalorieTarget.toString()),
               _buildCalorieStat('Consumed', consumedCalories.round().toString()),
               _buildCalorieStat(
                 'Remaining',
@@ -600,21 +583,21 @@ class _HomeScreenState extends State<HomeScreen> {
           
           // Macro Summary
           if (_proteinTarget != null || _carbsTarget != null || _fatTarget != null) ...[
-            const SizedBox(height: 24),
-            Divider(height: 1, color: Colors.grey[200]),
             const SizedBox(height: 20),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
             _buildMacroRow(
               'Protein',
               consumedProtein.round(),
               _proteinTarget?.round(),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _buildMacroRow(
               'Carbs',
               consumedCarbs.round(),
               _carbsTarget?.round(),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _buildMacroRow(
               'Fat',
               consumedFat.round(),
@@ -634,17 +617,17 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600]?.withValues(alpha: 0.8),
+            fontSize: 13,
+            color: Colors.grey[600],
             fontWeight: FontWeight.w500,
           ),
         ),
         Text(
           target != null ? '$consumed / $target g' : '$consumed g',
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey[700],
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -660,21 +643,19 @@ class _HomeScreenState extends State<HomeScreen> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600]?.withValues(alpha: 0.7),
+            color: Colors.grey[600],
             fontWeight: FontWeight.w500,
-            letterSpacing: 0.2,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
             color: isRemaining && intValue < 0
-                ? Colors.red[600]
-                : Colors.black87,
-            letterSpacing: -0.5,
+                ? Colors.red
+                : Colors.black,
           ),
         ),
       ],
@@ -688,7 +669,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final mealName = meal['name'] as String?;
     if (mealName == null || mealName.trim().isEmpty) {
       // This should never happen with proper guards, but handle gracefully
-      debugPrint('[HomeScreen] Warning: Meal $mealId has no name');
+      print('[HomeScreen] Warning: Meal $mealId has no name');
       return const SizedBox.shrink(); // Skip rendering meals without names
     }
     final mealCalories = _calculateTotalCalories(foods);
@@ -697,20 +678,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final mealFat = _calculateTotalFat(foods);
 
     return Container(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 3),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -727,8 +703,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                    letterSpacing: 0.1,
+                    color: Colors.black,
                   ),
                 ),
               ),
@@ -736,15 +711,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     '${mealCalories.round()} cal',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, color: Colors.grey[600]?.withValues(alpha: 0.7), size: 20),
+                    icon: Icon(Icons.more_vert, color: Colors.grey[600], size: 20),
                     onSelected: (value) {
                       if (value == 'rename') {
                         _showRenameMealDialog(context, mealId, mealName);
@@ -782,14 +757,13 @@ class _HomeScreenState extends State<HomeScreen> {
           
           // Macro summary (P: Xg C: Yg F: Zg)
           if (mealProtein > 0 || mealCarbs > 0 || mealFat > 0) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               'P: ${mealProtein.round()}g   C: ${mealCarbs.round()}g   F: ${mealFat.round()}g',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600]?.withValues(alpha: 0.7),
+                color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
-                letterSpacing: 0.3,
               ),
             ),
           ],
@@ -804,7 +778,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Add your first food',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600]?.withValues(alpha: 0.7),
+                  color: Colors.grey[600],
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -817,21 +791,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child:                     Text(
-                      food['name'] ?? 'Unknown',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
+                      child: Text(
+                        food['name'] ?? 'Unknown',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
                       ),
-                    ),
                     ),
                     Text(
                       '${((food['calories'] as num?)?.toDouble() ?? 0.0).round()} cal',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600]?.withValues(alpha: 0.8),
-                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
                       ),
                     ),
                   ],
@@ -853,7 +826,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                side: BorderSide(color: Colors.grey[300]!.withValues(alpha: 0.6)),
+                side: BorderSide(color: Colors.grey[300]!),
               ),
             ),
           ),

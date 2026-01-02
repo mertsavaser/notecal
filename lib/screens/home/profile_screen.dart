@@ -76,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      debugPrint('[ProfileScreen] Error loading profile: $e');
+      print('[ProfileScreen] Error loading profile: $e');
       if (mounted) {
         setState(() {
           _isLoadingProfile = false;
@@ -157,16 +157,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (_isLoadingProfile) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.white,
-        body: Center(
+        body: const Center(
           child: CircularProgressIndicator(),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -179,20 +179,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: Colors.black,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
               // Body Information Card
               _buildBodyInformationCard(),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               // Nutrition Targets Card
               _buildNutritionTargetsCard(),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               // Account Card
               _buildAccountCard(user?.email),
@@ -207,23 +207,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Build Body Information Card (view-only with Edit button)
   Widget _buildBodyInformationCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.grey[200]!),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -243,8 +231,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                        letterSpacing: 0.2,
+                        color: Colors.black,
                       ),
                     ),
                   ],
@@ -264,42 +251,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 12),
             _buildInfoRow('Height', _height != null ? '${_height!.toStringAsFixed(1)} cm' : 'Not set'),
             const SizedBox(height: 12),
-            _buildInfoRow('Age', _age != null ? '$_age years' : 'Not set'),
+            _buildInfoRow('Age', _age != null ? '${_age} years' : 'Not set'),
             const SizedBox(height: 12),
             _buildInfoRow('Gender', _gender ?? 'Not set'),
             const SizedBox(height: 12),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.fitness_center, color: Colors.grey[600], size: 18),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Activity Level',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      Flexible(
-                        child: Text(
-                          _activityLevel ?? 'Not set',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.end,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: _buildInfoRow('Activity Level', _activityLevel ?? 'Not set'),
                 ),
               ],
             ),
@@ -311,23 +272,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Build Nutrition Targets Card (read-only)
   Widget _buildNutritionTargetsCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.grey[200]!),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -343,8 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                    letterSpacing: 0.2,
+                    color: Colors.black,
                   ),
                 ),
               ],
@@ -380,23 +328,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Build Account Card
   Widget _buildAccountCard(String? email) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.grey[200]!),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -412,8 +348,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                    letterSpacing: 0.2,
+                    color: Colors.black,
                   ),
                 ),
               ],
@@ -458,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: Colors.grey[600]?.withValues(alpha: 0.8),
+            color: Colors.grey[700],
           ),
         ),
         Text(
@@ -466,7 +401,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Colors.black,
           ),
         ),
       ],
@@ -480,18 +415,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: Colors.grey[600]?.withValues(alpha: 0.8),
+            color: Colors.black87,
           ),
         ),
         Text(
           value,
           style: const TextStyle(
             fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
         ),
       ],
