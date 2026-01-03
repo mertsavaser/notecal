@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/meal_service.dart';
 
 /// Progress screen showing weekly calorie tracking and adherence score.
@@ -17,7 +19,39 @@ class ProgressScreen extends StatefulWidget {
 
 class _ProgressScreenState extends State<ProgressScreen> {
   final MealService _mealService = MealService();
-  final int dailyCalorieTarget = 2000; // TODO: Get from user profile
+  double? _dailyCalorieTarget;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCalorieTarget();
+  }
+
+  /// Load calorie target (TDEE) from user profile
+  Future<void> _loadCalorieTarget() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists && mounted) {
+        final data = doc.data();
+        final tdee = (data?['tdee'] as num?)?.toDouble();
+        
+        if (tdee != null && mounted) {
+          setState(() {
+            _dailyCalorieTarget = tdee;
+          });
+        }
+      }
+    } catch (e) {
+      print('[ProgressScreen] Error loading calorie target: $e');
+    }
+  }
 
   /// Get current week dates (Monday to Sunday)
   List<String> get _weekDates => _mealService.getCurrentWeekDates();
@@ -32,22 +66,107 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return '$weekday, ${date.month}/${date.day}';
   }
 
-  /// Calculate weekly score based on calorie adherence
-  /// Returns percentage (0-100)
-  Future<double> _calculateWeeklyScore(Map<String, Map<String, dynamic>?> summaries) async {
-    if (summaries.isEmpty) return 0.0;
+  /// Get motivational message based on score
+  String _getScoreMessage(double score) {
+    if (score >= 90) {
+      return "You're doing great this week!";
+    } else if (score >= 75) {
+      return "You're on track! Keep it up!";
+    } else if (score >= 60) {
+      return "Good progress! You're getting there.";
+    } else {
+      return "Keep going! Every day is a new opportunity.";
+    }
+  }
 
+  /// Build weekly score card that updates in real-time
+  Widget _buildWeeklyScoreCard() {
+    // Listen to today's stream to trigger rebuilds, then fetch all summaries
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: _mealService.getDailySummaryStream(_mealService.getTodayDate()),
+      builder: (context, _) {
+        // When today's data changes, recalculate weekly score
+        return FutureBuilder<Map<String, Map<String, dynamic>?>>(
+          future: _mealService.getWeeklySummaries(_weekDates),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+              return const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final summariesMap = snapshot.data ?? {};
+            final score = _calculateWeeklyScoreSync(summariesMap);
+            final message = _getScoreMessage(score);
+
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(20.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Weekly Score',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        '${score.round()}%',
+                        style: const TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        message,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+  }
+
+  /// Calculate weekly score synchronously
+  double _calculateWeeklyScoreSync(Map<String, Map<String, dynamic>?> summaries) {
     double totalDeviation = 0.0;
     int daysWithData = 0;
 
+    final calorieTarget = _dailyCalorieTarget ?? 2000.0;
     for (final entry in summaries.entries) {
       final summary = entry.value;
       if (summary != null) {
         final consumed = (summary['totalCalories'] as num?)?.toDouble() ?? 0.0;
-        // Calculate deviation as percentage from target
-        final deviation = (consumed - dailyCalorieTarget).abs() / dailyCalorieTarget;
-        totalDeviation += deviation;
-        daysWithData++;
+        if (consumed > 0) {
+          // Calculate deviation as percentage from target
+          final deviation = (consumed - calorieTarget).abs() / calorieTarget;
+          totalDeviation += deviation;
+          daysWithData++;
+        }
       }
     }
 
@@ -60,19 +179,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
     // Score decreases as deviation increases
     final score = (1.0 - avgDeviation.clamp(0.0, 1.0)) * 100;
     return score.clamp(0.0, 100.0);
-  }
-
-  /// Get motivational message based on score
-  String _getScoreMessage(double score) {
-    if (score >= 90) {
-      return "You're doing great this week!";
-    } else if (score >= 75) {
-      return "You're on track! Keep it up!";
-    } else if (score >= 60) {
-      return "Good progress! You're getting there.";
-    } else {
-      return "Keep going! Every day is a new opportunity.";
-    }
   }
 
   @override
@@ -99,74 +205,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             ),
 
-            // Weekly Score Card
-            FutureBuilder<Map<String, Map<String, dynamic>?>>(
-              future: _mealService.getWeeklySummaries(_weekDates),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                final summaries = snapshot.data ?? {};
-                
-                return FutureBuilder<double>(
-                  future: _calculateWeeklyScore(summaries),
-                  builder: (context, scoreSnapshot) {
-                    final score = scoreSnapshot.data ?? 0.0;
-                    final message = _getScoreMessage(score);
-
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      padding: const EdgeInsets.all(20.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Weekly Score',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            '${score.round()}%',
-                            style: const TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            message,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            // Weekly Score Card - Calculate from individual day streams
+            _buildWeeklyScoreCard(),
 
             const SizedBox(height: 16),
 
@@ -191,23 +231,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
             // Days List
             Expanded(
-              child: FutureBuilder<Map<String, Map<String, dynamic>?>>(
-                future: _mealService.getWeeklySummaries(_weekDates),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final summaries = snapshot.data ?? {};
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: _weekDates.length,
-                    itemBuilder: (context, index) {
-                      final date = _weekDates[index];
-                      final summary = summaries[date];
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                itemCount: _weekDates.length,
+                itemBuilder: (context, index) {
+                  final date = _weekDates[index];
+                  final isToday = date == _mealService.getTodayDate();
+                  
+                  return StreamBuilder<Map<String, dynamic>?>(
+                    stream: _mealService.getDailySummaryStream(date),
+                    builder: (context, summarySnapshot) {
+                      final summary = summarySnapshot.data;
                       final calories = (summary?['totalCalories'] as num?)?.toDouble() ?? 0.0;
-                      final isToday = date == _mealService.getTodayDate();
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -279,35 +314,40 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                 ),
                                 // Progress indicator
                                 if (calories > 0)
-                                  SizedBox(
-                                    width: 60,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          '${((calories / dailyCalorieTarget) * 100).clamp(0.0, 100.0).round()}%',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.grey[700],
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(4),
-                                          child: LinearProgressIndicator(
-                                            value: (calories / dailyCalorieTarget).clamp(0.0, 1.0),
-                                            minHeight: 6,
-                                            backgroundColor: Colors.grey[200],
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              (calories / dailyCalorieTarget) > 1.0
-                                                  ? Colors.orange
-                                                  : Colors.blue,
+                                  Builder(
+                                    builder: (context) {
+                                      final calorieTarget = _dailyCalorieTarget ?? 2000.0;
+                                      return SizedBox(
+                                        width: 60,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              '${((calories / calorieTarget) * 100).clamp(0.0, 100.0).round()}%',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.grey[700],
+                                              ),
                                             ),
-                                          ),
+                                            const SizedBox(height: 4),
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(4),
+                                              child: LinearProgressIndicator(
+                                                value: (calories / calorieTarget).clamp(0.0, 1.0),
+                                                minHeight: 6,
+                                                backgroundColor: Colors.grey[200],
+                                                valueColor: AlwaysStoppedAnimation<Color>(
+                                                  (calories / calorieTarget) > 1.0
+                                                      ? Colors.orange
+                                                      : Colors.blue,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      );
+                                    },
                                   ),
                                 const SizedBox(width: 8),
                                 Icon(

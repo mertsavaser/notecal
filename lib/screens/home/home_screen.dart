@@ -25,9 +25,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final MealService _mealService = MealService();
-  final int dailyCalorieTarget = 2000;
-
-  // Macro targets (loaded from user profile)
+  
+  // Calorie and macro targets (loaded from user profile)
+  double? _dailyCalorieTarget;
   double? _proteinTarget;
   double? _carbsTarget;
   double? _fatTarget;
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadMacroTargets();
   }
 
-  /// Load macro targets from user profile
+  /// Load calorie and macro targets from user profile
   /// Targets are calculated from TDEE: 30% protein, 40% carbs, 30% fat
   Future<void> _loadMacroTargets() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -62,6 +62,8 @@ class _HomeScreenState extends State<HomeScreen> {
         
         if (tdee != null) {
           setState(() {
+            // Set daily calorie target to TDEE
+            _dailyCalorieTarget = tdee;
             // Protein: 30% of calories, 4 calories per gram
             _proteinTarget = (tdee * 0.30) / 4;
             // Carbs: 40% of calories, 4 calories per gram
@@ -524,9 +526,11 @@ class _HomeScreenState extends State<HomeScreen> {
     double consumedCarbs,
     double consumedFat,
   ) {
-    final remainingCalories = dailyCalorieTarget - consumedCalories.round();
-    final progress = dailyCalorieTarget > 0
-        ? (consumedCalories / dailyCalorieTarget).clamp(0.0, 1.0)
+    // Use TDEE from profile, fallback to 2000 if not loaded yet
+    final calorieTarget = _dailyCalorieTarget ?? 2000.0;
+    final remainingCalories = calorieTarget - consumedCalories.round();
+    final progress = calorieTarget > 0
+        ? (consumedCalories / calorieTarget).clamp(0.0, 1.0)
         : 0.0;
 
     return Container(
@@ -571,7 +575,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildCalorieStat('Target', dailyCalorieTarget.toString()),
+              _buildCalorieStat('Target', calorieTarget.round().toString()),
               _buildCalorieStat('Consumed', consumedCalories.round().toString()),
               _buildCalorieStat(
                 'Remaining',
@@ -785,6 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           else
             ...foods.map((food) {
+              final foodId = food['id'] as String?;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
@@ -807,6 +812,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Colors.grey[700],
                       ),
                     ),
+                    if (foodId != null) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        color: Colors.red[400],
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () async {
+                          final success = await _mealService.deleteFood(
+                            _todayDate,
+                            mealId,
+                            foodId,
+                          );
+                          if (!success && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Failed to delete food item'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                   ],
                 ),
               );

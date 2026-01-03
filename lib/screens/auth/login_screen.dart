@@ -238,16 +238,33 @@ class _LoginScreenState extends State<LoginScreen> {
         print('  Details: ${e.details}');
       }
 
+      // Check if login actually succeeded despite the error
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        print('[Google Sign-In] Login succeeded despite error, continuing...');
+        return currentUser;
+      }
+
       String errorMessage = 'Google Sign-In failed: ${e.toString()}';
       
-      // Check for common configuration errors
+      // Check for common configuration errors - only show if login actually failed
       if (e.toString().contains('PlatformException') ||
           e.toString().contains('DEVELOPER_ERROR') ||
           e.toString().contains('SIGN_IN_FAILED')) {
-        errorMessage = 
-          'Google Sign-In configuration error. '
-          'Please ensure SHA-1 and SHA-256 certificates are added to Firebase Console. '
-          'Get your SHA keys using: keytool -list -v -keystore android/app/debug.keystore';
+        // Only show SHA error if it's a critical failure
+        // Don't show for warnings that don't block login
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('network') || 
+            errorString.contains('timeout') ||
+            errorString.contains('cancelled')) {
+          errorMessage = 'Google Sign-In was interrupted. Please try again.';
+        } else {
+          // Only show SHA configuration error for actual configuration failures
+          errorMessage = 
+            'Google Sign-In configuration error. '
+            'Please ensure SHA-1 and SHA-256 certificates are added to Firebase Console. '
+            'Get your SHA keys using: keytool -list -v -keystore android/app/debug.keystore';
+        }
       }
 
       if (mounted) {
