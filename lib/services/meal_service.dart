@@ -344,14 +344,17 @@ class MealService {
   /// For real-time food updates, consider using individual StreamBuilders for each meal.
   Stream<List<Map<String, dynamic>>> getDayMealsStream(String date) {
     try {
-      // Ensure system meals exist first
-      ensureSystemMeals(date);
+      // Ensure system meals exist first (fire and forget, will be awaited in stream)
+      ensureSystemMeals(date).then((_) {}).catchError((e) {
+        print('[MealService] Error ensuring system meals in getDayMealsStream: $e');
+      });
 
       return _mealsCollectionRef(date)
           .snapshots()
           .asyncMap((mealsSnapshot) async {
-        // Ensure system meals exist (in case they were just created)
-        await ensureSystemMeals(date);
+        try {
+          // Ensure system meals exist (in case they were just created)
+          await ensureSystemMeals(date);
         
         final List<Map<String, dynamic>> systemMeals = [];
         final List<Map<String, dynamic>> customMeals = [];
@@ -437,10 +440,63 @@ class MealService {
 
         // Return: system meals first, then custom meals
         return [...systemMeals, ...customMeals];
+        } catch (e) {
+          print('[MealService] Error in asyncMap for getDayMealsStream: $e');
+          return <Map<String, dynamic>>[]; // Return empty list on error
+        }
+      }).handleError((error) {
+        print('[MealService] Stream error in getDayMealsStream: $error');
       });
     } catch (e) {
       print('[MealService] Error getting day meals stream: $e');
       return Stream.value([]);
+    }
+  }
+
+  /// Update a food item's amount and unit.
+  /// Recalculates macros based on the original food data.
+  Future<bool> updateFood({
+    required String date,
+    required String mealId,
+    required String foodId,
+    required double amount,
+    required String unit,
+  }) async {
+    try {
+      final foodDoc = await _foodsCollectionRef(date, mealId).doc(foodId).get();
+      if (!foodDoc.exists) {
+        print('[MealService] Food $foodId does not exist');
+        return false;
+      }
+
+      final foodData = foodDoc.data() as Map<String, dynamic>;
+      final originalAmount = (foodData['amount'] as num?)?.toDouble() ?? 100.0;
+      final originalCalories = (foodData['calories'] as num?)?.toDouble() ?? 0.0;
+      final originalProtein = (foodData['protein'] as num?)?.toDouble() ?? 0.0;
+      final originalCarbs = (foodData['carbs'] as num?)?.toDouble() ?? 0.0;
+      final originalFat = (foodData['fat'] as num?)?.toDouble() ?? 0.0;
+
+      // Recalculate based on new amount
+      final ratio = amount / originalAmount;
+      final newCalories = originalCalories * ratio;
+      final newProtein = originalProtein * ratio;
+      final newCarbs = originalCarbs * ratio;
+      final newFat = originalFat * ratio;
+
+      await _foodsCollectionRef(date, mealId).doc(foodId).update({
+        'amount': amount,
+        'unit': unit,
+        'calories': newCalories,
+        'protein': newProtein,
+        'carbs': newCarbs,
+        'fat': newFat,
+      });
+
+      await _updateDailySummary(date);
+      return true;
+    } catch (e) {
+      print('[MealService] Error updating food: $e');
+      return false;
     }
   }
 

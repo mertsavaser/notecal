@@ -252,42 +252,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     if (_isLoadingProfile) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFAFAFA),
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
+            icon: Icon(Icons.close, color: Colors.grey[700], size: 24),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
         body: const Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
+          ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: Icon(Icons.close, color: Colors.grey[700], size: 24),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Edit Profile',
           style: TextStyle(
-            color: Colors.black,
+            color: Color(0xFF1A1A1A),
             fontSize: 20,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.3,
           ),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -297,12 +301,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const Text(
                   'Body Information',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1A1A1A),
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 _buildInputField(
                   controller: _weightController,
                   label: 'Weight (kg)',
@@ -310,7 +315,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.monitor_weight_outlined,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 _buildInputField(
                   controller: _heightController,
                   label: 'Height (cm)',
@@ -318,7 +323,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.height_outlined,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 _buildInputField(
                   controller: _ageController,
                   label: 'Age',
@@ -326,22 +331,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   keyboardType: TextInputType.number,
                   icon: Icons.calendar_today_outlined,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 _buildGenderSelector(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 // Activity Level Section
                 const Text(
                   'Activity Level',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1A1A1A),
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 _buildActivityLevelDropdown(),
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
 
                 // Action Buttons
                 SizedBox(
@@ -416,14 +422,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
+      style: const TextStyle(
+        fontSize: 16,
+        color: Color(0xFF1A1A1A),
+        fontWeight: FontWeight.w400,
+      ),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: icon != null ? Icon(icon) : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+        labelStyle: TextStyle(
+          color: Colors.grey[600],
+          fontWeight: FontWeight.w400,
         ),
+        prefixIcon: icon != null ? Icon(icon, color: Colors.grey[500], size: 22) : null,
         filled: true,
         fillColor: Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
     );
   }
@@ -470,16 +487,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _buildActivityLevelDropdown() {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(18),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: DropdownButton<String>(
         value: _selectedActivityLevel,
         isExpanded: true,
         underline: const SizedBox(),
+        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 22),
         items: _activityFactors.keys.map((level) {
           return DropdownMenuItem<String>(
             value: level,
@@ -487,7 +504,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               level,
               style: const TextStyle(
                 fontSize: 16,
-                color: Colors.black87,
+                color: Color(0xFF1A1A1A),
+                fontWeight: FontWeight.w400,
               ),
             ),
           );

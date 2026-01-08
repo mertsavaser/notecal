@@ -60,9 +60,9 @@ class AppleAuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Only show on iOS
+    // Only show on iOS - return empty SizedBox with height 0 instead of shrink
     if (!Platform.isIOS) {
-      return const SizedBox.shrink();
+      return const SizedBox(height: 0, width: 0);
     }
 
     return SizedBox(
@@ -77,16 +77,16 @@ class AppleAuthButton extends StatelessWidget {
           ),
           backgroundColor: Colors.white,
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.apple,
               size: 24,
               color: Color(0xFF1A1A1A),
             ),
-            const SizedBox(width: 12),
-            const Text(
+            SizedBox(width: 12),
+            Text(
               'Continue with Apple',
               style: TextStyle(
                 fontSize: 16,

@@ -157,19 +157,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (_isLoadingProfile) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: const Center(
-          child: CircularProgressIndicator(),
+      return const Scaffold(
+        backgroundColor: Color(0xFFFAFAFA),
+        body: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
+          ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -177,27 +180,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Text(
                 'Profile',
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1A1A1A),
+                  letterSpacing: -0.5,
+                  height: 1.0,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               // Body Information Card
               _buildBodyInformationCard(),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               // Nutrition Targets Card
               _buildNutritionTargetsCard(),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               // Account Card
               _buildAccountCard(user?.email),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -207,227 +212,283 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Build Body Information Card (view-only with Edit button)
   Widget _buildBodyInformationCard() {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.grey[200]!),
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with Edit button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.person_outline, color: Colors.grey[600], size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Body Information',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with Edit button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Body Information',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1A1A1A),
+                  letterSpacing: -0.3,
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _navigateToEditProfile,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit_outlined, color: Colors.grey[600], size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
-                  color: Colors.blue,
-                  onPressed: _navigateToEditProfile,
-                  tooltip: 'Edit',
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            
-            // Body information rows
-            _buildInfoRow('Weight', _weight != null ? '${_weight!.toStringAsFixed(1)} kg' : 'Not set'),
-            const SizedBox(height: 12),
-            _buildInfoRow('Height', _height != null ? '${_height!.toStringAsFixed(1)} cm' : 'Not set'),
-            const SizedBox(height: 12),
-            _buildInfoRow('Age', _age != null ? '${_age} years' : 'Not set'),
-            const SizedBox(height: 12),
-            _buildInfoRow('Gender', _gender ?? 'Not set'),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.fitness_center, color: Colors.grey[600], size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildInfoRow('Activity Level', _activityLevel ?? 'Not set'),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
+          // Body information rows
+          _buildInfoRow('Weight', _weight != null ? '${_weight!.toStringAsFixed(1)}' : 'Not set', _weight != null ? 'kg' : null),
+          const SizedBox(height: 16),
+          _buildInfoRow('Height', _height != null ? '${_height!.toStringAsFixed(1)}' : 'Not set', _height != null ? 'cm' : null),
+          const SizedBox(height: 16),
+          _buildInfoRow('Age', _age != null ? '$_age' : 'Not set', _age != null ? 'years' : null),
+          const SizedBox(height: 16),
+          _buildInfoRow('Gender', _gender ?? 'Not set', null),
+          const SizedBox(height: 16),
+          _buildInfoRow('Activity Level', _activityLevel ?? 'Not set', null),
+        ],
       ),
     );
   }
 
   /// Build Nutrition Targets Card (read-only)
   Widget _buildNutritionTargetsCard() {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.grey[200]!),
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.restaurant_menu, color: Colors.grey[600], size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Nutrition Targets',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Nutrition Targets',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF1A1A1A),
+              letterSpacing: -0.3,
             ),
-            const SizedBox(height: 20),
-            if (_tdee != null) ...[
-              _buildTargetRow('Daily Calories', '${_tdee!.round()} cal'),
-              if (_proteinTarget != null) ...[
-                const SizedBox(height: 12),
-                _buildTargetRow('Protein', '${_proteinTarget!.round()} g'),
-              ],
-              if (_carbsTarget != null) ...[
-                const SizedBox(height: 12),
-                _buildTargetRow('Carbs', '${_carbsTarget!.round()} g'),
-              ],
-              if (_fatTarget != null) ...[
-                const SizedBox(height: 12),
-                _buildTargetRow('Fat', '${_fatTarget!.round()} g'),
-              ],
-            ] else
-              const Text(
-                'Recalculate calories to see targets',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+          ),
+          const SizedBox(height: 24),
+          if (_tdee != null) ...[
+            _buildTargetRow('Daily Calories', '${_tdee!.round()}', 'cal'),
+            if (_proteinTarget != null) ...[
+              const SizedBox(height: 16),
+              _buildTargetRow('Protein', '${_proteinTarget!.round()}', 'g'),
+            ],
+            if (_carbsTarget != null) ...[
+              const SizedBox(height: 16),
+              _buildTargetRow('Carbs', '${_carbsTarget!.round()}', 'g'),
+            ],
+            if (_fatTarget != null) ...[
+              const SizedBox(height: 16),
+              _buildTargetRow('Fat', '${_fatTarget!.round()}', 'g'),
+            ],
+          ] else
+            Text(
+              'Recalculate calories to see targets',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+                fontWeight: FontWeight.w400,
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
 
   /// Build Account Card
   Widget _buildAccountCard(String? email) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.grey[200]!),
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.account_circle_outlined, color: Colors.grey[600], size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Account',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Account',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF1A1A1A),
+              letterSpacing: -0.3,
             ),
-            const SizedBox(height: 20),
-            _buildInfoRow('Email', email ?? 'Not available'),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: _signOut,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  side: BorderSide(color: Colors.red[300]!),
-                ),
-                child: const Text(
+          ),
+          const SizedBox(height: 24),
+          Text(
+            email ?? 'Not available',
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 28),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _signOut,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: Text(
                   'Sign Out',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFFE63946),
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   /// Build info row (label + value)
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, String? unit) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
       children: [
         Text(
           label,
           style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[700],
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Colors.grey[600],
+            letterSpacing: 0.1,
           ),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1A1A1A),
+                letterSpacing: -0.2,
+              ),
+            ),
+            if (unit != null) ...[
+              const SizedBox(width: 4),
+              Text(
+                unit,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
   }
 
   /// Build target row (for nutrition targets)
-  Widget _buildTargetRow(String label, String value) {
+  Widget _buildTargetRow(String label, String value, String unit) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Colors.grey[600],
+            letterSpacing: 0.1,
           ),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1A1A1A),
+                letterSpacing: -0.2,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              unit,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
         ),
       ],
     );

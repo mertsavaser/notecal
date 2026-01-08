@@ -108,16 +108,16 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
-            offset: Offset(0, -5),
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -126,8 +126,8 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
         children: [
           // Drag handle
           Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 40,
+            margin: const EdgeInsets.only(top: 12, bottom: 12),
+            width: 36,
             height: 4,
             decoration: BoxDecoration(
               color: Colors.grey[300],
@@ -137,7 +137,7 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
 
           // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -145,21 +145,29 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                   'Add Meal',
                   style: TextStyle(
                     fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1A1A1A),
+                    letterSpacing: -0.5,
                   ),
                 ),
                 if (_isLoading)
                   const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
+                    ),
                   ),
               ],
             ),
           ),
 
-          const Divider(height: 1),
+          Container(
+            height: 1,
+            color: Colors.grey[100],
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+          ),
 
           // Content
           Flexible(
@@ -170,53 +178,70 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                 children: [
                   // Section 1: System Meals (always exist, disabled)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
                     child: Text(
                       'System Meals',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                        letterSpacing: 0.2,
                       ),
                     ),
                   ),
                   ...MealService.systemMealNames.map((mealName) {
-                    return ListTile(
-                      leading: Icon(
-                        _getMealIcon(mealName),
-                        color: Colors.grey[400],
-                      ),
-                      title: Text(
-                        mealName,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[600],
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _getMealIcon(mealName),
+                              color: Colors.grey[400],
+                              size: 22,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                mealName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.check_circle_outline,
+                              color: Colors.grey[300],
+                              size: 20,
+                            ),
+                          ],
                         ),
                       ),
-                      trailing: Icon(
-                        Icons.check_circle,
-                        color: Colors.grey[400],
-                        size: 20,
-                      ),
-                      enabled: false, // Disabled - these meals always exist
                     );
                   }),
 
-                  const Divider(height: 32),
+                  Container(
+                    height: 1,
+                    color: Colors.grey[100],
+                    margin: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                  ),
 
                   // Section 2: Custom Meal
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Custom Meal',
                           style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                            letterSpacing: 0.2,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -225,34 +250,57 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                           enabled: !_isLoading,
                           decoration: InputDecoration(
                             hintText: 'Enter meal name (e.g. "Pre-workout")',
+                            hintStyle: TextStyle(
+                              color: Colors.grey[400],
+                              fontWeight: FontWeight.w400,
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
+                              horizontal: 20,
+                              vertical: 16,
                             ),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF1A1A1A),
+                            fontWeight: FontWeight.w400,
                           ),
                           textCapitalization: TextCapitalization.words,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _createCustomMeal,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Add Meal',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                          child: Material(
+                            color: const Color(0xFF4A90E2),
+                            borderRadius: BorderRadius.circular(16),
+                            child: InkWell(
+                              onTap: _isLoading ? null : _createCustomMeal,
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                alignment: Alignment.center,
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Add Meal',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                               ),
                             ),
                           ),

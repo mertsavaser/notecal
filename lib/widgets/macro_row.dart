@@ -17,10 +17,10 @@ class MacroRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 28),
       decoration: BoxDecoration(
         color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -38,20 +38,31 @@ class MacroRow extends StatelessWidget {
     return Column(
       children: [
         Text(
-          '$value $unit',
+          value,
           style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF1A1A1A),
+            height: 1.2,
+            letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 4),
+        Text(
+          unit,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 6),
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
+            fontSize: 11,
+            color: Colors.grey[500],
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.2,
           ),
         ),
       ],

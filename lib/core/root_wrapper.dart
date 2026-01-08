@@ -67,17 +67,54 @@ class _RootWrapperState extends State<RootWrapper> {
           );
         }
 
-        // On error, assume onboarding not completed (show onboarding)
+        // Handle errors - assume onboarding not completed (show onboarding)
+        if (snapshot.hasError) {
+          print('[RootWrapper] Error checking onboarding: ${snapshot.error}');
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.warning_amber, size: 64, color: Colors.orange),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Error loading app',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    snapshot.error.toString(),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _hasInitialized = false;
+                        _onboardingCheckFuture = null;
+                        _checkOnboardingStatus();
+                      });
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
         final isCompleted = snapshot.data ?? false;
         print('[RootWrapper] Onboarding completed: $isCompleted');
 
-        // Onboarding completed → go to AuthWrapper
+        // Onboarding completed → go to AuthWrapper (AuthWrapper has its own Scaffold)
         if (isCompleted) {
           print('[RootWrapper] Showing AuthWrapper');
           return const AuthWrapper();
         }
 
-        // Onboarding NOT completed → show OnboardingScreen
+        // Onboarding NOT completed → show OnboardingScreen (OnboardingScreen has its own Scaffold)
         print('[RootWrapper] Showing OnboardingScreen');
         return const OnboardingScreen();
       },

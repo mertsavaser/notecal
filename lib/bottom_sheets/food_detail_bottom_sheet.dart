@@ -174,16 +174,16 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
-            offset: Offset(0, -5),
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -193,8 +193,8 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
           children: [
             // Drag handle
             Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
+              margin: const EdgeInsets.only(top: 12, bottom: 12),
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey[300],
@@ -204,7 +204,7 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
 
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(28, 8, 28, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -212,11 +212,12 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                     widget.food['name'] ?? 'Unknown Food',
                     style: const TextStyle(
                       fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1A1A1A),
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   MacroRow(
                     calories: _calculatedCalories,
                     protein: _calculatedProtein,
@@ -227,35 +228,42 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
               ),
             ),
 
-            const Divider(height: 32),
+            Container(
+              height: 1,
+              color: Colors.grey[100],
+              margin: const EdgeInsets.symmetric(horizontal: 28),
+            ),
+            const SizedBox(height: 32),
 
             // Serving Controls
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Serving',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[600],
+                      letterSpacing: 0.2,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   
                   // Serving Unit Dropdown
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(18),
                     ),
                     child: DropdownButton<String>(
                       value: _selectedServingUnit,
                       isExpanded: true,
                       underline: const SizedBox(),
+                      icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 22),
                       items: _servingUnits.map((String unit) {
                         return DropdownMenuItem<String>(
                           value: unit,
@@ -263,7 +271,8 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                             unit,
                             style: const TextStyle(
                               fontSize: 16,
-                              color: Colors.black87,
+                              color: Color(0xFF1A1A1A),
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         );
@@ -277,34 +286,46 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   
                   // Amount Input
                   Row(
                     children: [
-                      const Text(
+                      Text(
                         'Amount',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                          color: Colors.grey[600],
+                          letterSpacing: 0.2,
                         ),
                       ),
                       const Spacer(),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove),
-                              onPressed: _decrementAmount,
-                              color: Colors.black87,
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _decrementAmount,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  bottomLeft: Radius.circular(20),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Icon(Icons.remove, color: Colors.grey[600], size: 20),
+                                ),
+                              ),
                             ),
-                            SizedBox(
-                              width: 80,
+                            Container(
+                              width: 90,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
                               child: TextField(
                                 controller: _amountController,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -313,13 +334,13 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                                 ],
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF1A1A1A),
                                 ),
                                 decoration: const InputDecoration(
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                  contentPadding: EdgeInsets.symmetric(vertical: 12),
                                 ),
                                 onChanged: (value) {
                                   final parsed = double.tryParse(value);
@@ -331,10 +352,19 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                                 },
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _incrementAmount,
-                              color: Colors.black87,
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _incrementAmount,
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(20),
+                                  bottomRight: Radius.circular(20),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Icon(Icons.add, color: Colors.grey[600], size: 20),
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -345,40 +375,42 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 40),
 
             // Add Button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
               child: SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _addToMeal,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7A3EBD),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                child: Material(
+                  color: const Color(0xFF4A90E2),
+                  borderRadius: BorderRadius.circular(20),
+                  child: InkWell(
+                    onTap: _isLoading ? null : _addToMeal,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      alignment: Alignment.center,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Add to Meal',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
                     ),
-                    elevation: 0,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Add to Meal',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
                 ),
               ),
             ),

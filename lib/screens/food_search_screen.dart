@@ -97,20 +97,21 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: Colors.grey[700], size: 24),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Search Food',
           style: TextStyle(
-            color: Colors.black87,
+            color: Color(0xFF1A1A1A),
             fontSize: 20,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.3,
           ),
         ),
       ),
@@ -118,11 +119,18 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
         children: [
           // Search Field
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 20.0),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: TextField(
                 controller: _searchController,
@@ -130,22 +138,25 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                 decoration: InputDecoration(
                   hintText: 'Search foods...',
                   hintStyle: TextStyle(
-                    color: Colors.grey[500],
+                    color: Colors.grey[400],
                     fontSize: 16,
+                    fontWeight: FontWeight.w400,
                   ),
                   prefixIcon: Icon(
                     Icons.search,
-                    color: Colors.grey[600],
+                    color: Colors.grey[500],
+                    size: 22,
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
+                    horizontal: 20,
+                    vertical: 18,
                   ),
                 ),
                 style: const TextStyle(
                   fontSize: 16,
-                  color: Colors.black87,
+                  color: Color(0xFF1A1A1A),
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -164,7 +175,8 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     if (_isSearching) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7A3EBD)),
+          strokeWidth: 2.5,
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
         ),
       );
     }
@@ -175,16 +187,17 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.search,
-              size: 80,
+              Icons.search_outlined,
+              size: 64,
               color: Colors.grey[300],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               'Start typing to search foods',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -198,17 +211,18 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.search_off,
-              size: 80,
+              Icons.search_off_outlined,
+              size: 64,
               color: Colors.grey[300],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               'No foods found',
               style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
+                fontSize: 17,
+                color: Colors.grey[700],
                 fontWeight: FontWeight.w500,
+                letterSpacing: -0.2,
               ),
             ),
             const SizedBox(height: 8),
@@ -217,6 +231,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -225,7 +240,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       itemCount: _searchResults.length,
       itemBuilder: (context, index) {
         final food = _searchResults[index];

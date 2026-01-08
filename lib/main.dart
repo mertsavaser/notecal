@@ -8,6 +8,42 @@ void main() async {
   // Ensure Flutter binding is initialized FIRST
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Global error handling
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    print('[FLUTTER ERROR] ${details.exception}');
+    print('[FLUTTER ERROR] Stack: ${details.stack}');
+  };
+  
+  // Custom error widget to show errors in UI
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            const Text(
+              'Bir hata oluştu',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                details.exception.toString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  };
+  
   // Initialize Firebase and wait for completion
   try {
     final app = await Firebase.initializeApp();
@@ -36,8 +72,9 @@ void main() async {
     print('[INIT] Current user after init: ${auth.currentUser?.uid ?? "null"}');
     
     runApp(const NotecalApp());
-  } catch (e) {
+  } catch (e, stackTrace) {
     print('[INIT] Firebase initialization error: $e');
+    print('[INIT] Stack trace: $stackTrace');
     // Still run the app even if initialization has issues
     runApp(const NotecalApp());
   }

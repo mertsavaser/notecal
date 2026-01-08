@@ -55,7 +55,7 @@ class FirestoreFoodService {
           .collection('foods')
           .orderBy('name_lowercase')
           .startAt([lowerQuery])
-          .endAt([lowerQuery + '\uf8ff'])
+          .endAt(['$lowerQuery\u{f8ff}'])
           .limit(20)
           .get();
 

@@ -22,7 +22,11 @@ class NotecalApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'Inter',
+        scaffoldBackgroundColor: const Color(0xFFFAFAFA),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF4A90E2),
+          brightness: Brightness.light,
+        ),
       ),
       home: home,
     );

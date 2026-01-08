@@ -58,10 +58,37 @@ class _AuthWrapperState extends State<AuthWrapper> {
         // Get the user from snapshot (prefer snapshot over currentUser for stream updates)
         final user = authSnapshot.data;
 
-        // No user logged in → show LoginScreen
+        // No user logged in → show LoginScreen (LoginScreen has its own Scaffold)
         if (user == null) {
           print('[AuthWrapper] No user - showing LoginScreen');
           return const LoginScreen();
+        }
+        
+        // Handle errors in stream
+        if (authSnapshot.hasError) {
+          print('[AuthWrapper] Error in auth stream: ${authSnapshot.error}');
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Authentication Error',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    authSnapshot.error.toString(),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         // User is logged in → check profile status
