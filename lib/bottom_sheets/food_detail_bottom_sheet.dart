@@ -4,7 +4,7 @@ import '../services/meal_service.dart';
 import '../widgets/macro_row.dart';
 
 /// Bottom sheet for adding a food item to a meal.
-/// 
+///
 /// Architecture:
 /// - Uses MealService for Firestore writes (date-based structure)
 /// - Supports optimistic updates: UI updates immediately, then syncs with Firestore
@@ -27,7 +27,7 @@ class FoodDetailBottomSheet extends StatefulWidget {
 class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
   final MealService _mealService = MealService();
   final TextEditingController _amountController = TextEditingController();
-  
+
   String _selectedServingUnit = 'g';
   double _amount = 100.0;
   bool _isLoading = false;
@@ -40,7 +40,8 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
   late double _baseServingSize;
 
   // Calculated values based on amount
-  double get _calculatedCalories => (_baseCalories / _baseServingSize) * _amount;
+  double get _calculatedCalories =>
+      (_baseCalories / _baseServingSize) * _amount;
   double get _calculatedProtein => (_baseProtein / _baseServingSize) * _amount;
   double get _calculatedCarbs => (_baseCarbs / _baseServingSize) * _amount;
   double get _calculatedFat => (_baseFat / _baseServingSize) * _amount;
@@ -61,7 +62,8 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
     _baseProtein = (widget.food['protein'] as num?)?.toDouble() ?? 0.0;
     _baseCarbs = (widget.food['carbs'] as num?)?.toDouble() ?? 0.0;
     _baseFat = (widget.food['fat'] as num?)?.toDouble() ?? 0.0;
-    _baseServingSize = (widget.food['serving_size'] as num?)?.toDouble() ?? 100.0;
+    _baseServingSize =
+        (widget.food['serving_size'] as num?)?.toDouble() ?? 100.0;
   }
 
   void _onAmountChanged() {
@@ -91,7 +93,7 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
   }
 
   /// Add food to meal with optimistic update support.
-  /// 
+  ///
   /// Flow:
   /// 1. Create optimistic food data (for instant UI feedback)
   /// 2. Write to Firestore using MealService
@@ -251,10 +253,11 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Serving Unit Dropdown
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.grey[50],
                       borderRadius: BorderRadius.circular(18),
@@ -263,7 +266,8 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                       value: _selectedServingUnit,
                       isExpanded: true,
                       underline: const SizedBox(),
-                      icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 22),
+                      icon: Icon(Icons.keyboard_arrow_down,
+                          color: Colors.grey[500], size: 22),
                       items: _servingUnits.map((String unit) {
                         return DropdownMenuItem<String>(
                           value: unit,
@@ -287,7 +291,7 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Amount Input
                   Row(
                     children: [
@@ -319,18 +323,23 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                                 ),
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
-                                  child: Icon(Icons.remove, color: Colors.grey[600], size: 20),
+                                  child: Icon(Icons.remove,
+                                      color: Colors.grey[600], size: 20),
                                 ),
                               ),
                             ),
                             Container(
                               width: 90,
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
                               child: TextField(
                                 controller: _amountController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 inputFormatters: [
-                                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'^\d+\.?\d{0,2}')),
                                 ],
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
@@ -340,7 +349,8 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                                 ),
                                 decoration: const InputDecoration(
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                                  contentPadding:
+                                      EdgeInsets.symmetric(vertical: 12),
                                 ),
                                 onChanged: (value) {
                                   final parsed = double.tryParse(value);
@@ -362,7 +372,8 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                                 ),
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
-                                  child: Icon(Icons.add, color: Colors.grey[600], size: 20),
+                                  child: Icon(Icons.add,
+                                      color: Colors.grey[600], size: 20),
                                 ),
                               ),
                             ),
@@ -397,7 +408,8 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
                           : const Text(
@@ -423,4 +435,3 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
     );
   }
 }
-

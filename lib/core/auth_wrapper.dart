@@ -18,17 +18,18 @@ class _AuthWrapperState extends State<AuthWrapper> {
     super.initState();
     // Check current user immediately
     final currentUser = FirebaseAuth.instance.currentUser;
-    print('[AuthWrapper] initState - currentUser: ${currentUser?.uid ?? "null"}');
+    print(
+        '[AuthWrapper] initState - currentUser: ${currentUser?.uid ?? "null"}');
   }
 
   @override
   Widget build(BuildContext context) {
     print('[AuthWrapper] build() called');
-    
+
     // Get current user immediately (for initial state)
     final currentUser = FirebaseAuth.instance.currentUser;
     print('[AuthWrapper] build() - currentUser: ${currentUser?.uid ?? "null"}');
-    
+
     return StreamBuilder<User?>(
       // Use a stable key that doesn't change on every build
       // The StreamBuilder will rebuild when the stream emits, not when the key changes
@@ -40,13 +41,17 @@ class _AuthWrapperState extends State<AuthWrapper> {
       initialData: currentUser,
       builder: (context, authSnapshot) {
         // Debug logging
-        print('[AuthWrapper] StreamBuilder rebuild - ConnectionState: ${authSnapshot.connectionState}');
-        print('[AuthWrapper] hasData: ${authSnapshot.hasData}, hasError: ${authSnapshot.hasError}');
-        print('[AuthWrapper] authSnapshot.data: ${authSnapshot.data?.uid ?? "null"}');
-        
+        print(
+            '[AuthWrapper] StreamBuilder rebuild - ConnectionState: ${authSnapshot.connectionState}');
+        print(
+            '[AuthWrapper] hasData: ${authSnapshot.hasData}, hasError: ${authSnapshot.hasError}');
+        print(
+            '[AuthWrapper] authSnapshot.data: ${authSnapshot.data?.uid ?? "null"}');
+
         // During initial connection, show loading
         // This ensures we wait for the first event from the stream
-        if (authSnapshot.connectionState == ConnectionState.waiting && !authSnapshot.hasData) {
+        if (authSnapshot.connectionState == ConnectionState.waiting &&
+            !authSnapshot.hasData) {
           print('[AuthWrapper] Waiting for auth state...');
           return const Scaffold(
             body: Center(
@@ -63,7 +68,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           print('[AuthWrapper] No user - showing LoginScreen');
           return const LoginScreen();
         }
-        
+
         // Handle errors in stream
         if (authSnapshot.hasError) {
           print('[AuthWrapper] Error in auth stream: ${authSnapshot.error}');
@@ -123,7 +128,8 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
     super.didUpdateWidget(oldWidget);
     // Re-check if UID changes (shouldn't happen, but safety check)
     if (oldWidget.uid != widget.uid) {
-      print('[ProfileChecker] UID changed from ${oldWidget.uid} to ${widget.uid} - rechecking');
+      print(
+          '[ProfileChecker] UID changed from ${oldWidget.uid} to ${widget.uid} - rechecking');
       setState(() {
         _profileCheckFuture = _checkProfileComplete();
       });
@@ -133,8 +139,10 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
   /// Check if user profile is complete (has required fields)
   Future<bool> _checkProfileComplete() async {
     try {
-      print('[ProfileChecker] Checking profile completeness for UID: ${widget.uid}');
-      final isComplete = await FirestoreHelper.checkUserProfileComplete(widget.uid);
+      print(
+          '[ProfileChecker] Checking profile completeness for UID: ${widget.uid}');
+      final isComplete =
+          await FirestoreHelper.checkUserProfileComplete(widget.uid);
       print('[ProfileChecker] exists: $isComplete');
       return isComplete;
     } catch (e) {
@@ -156,9 +164,11 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
       future: _profileCheckFuture,
       builder: (context, snapshot) {
         // Debug logging
-        print('[ProfileChecker] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
-        print('[ProfileChecker] hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
-        
+        print(
+            '[ProfileChecker] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
+        print(
+            '[ProfileChecker] hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
+
         if (snapshot.hasError) {
           print('[ProfileChecker] Error: ${snapshot.error}');
         }
@@ -175,7 +185,8 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
 
         // Handle errors - assume profile doesn't exist
         if (snapshot.hasError || !snapshot.hasData) {
-          print('[ProfileChecker] Profile check failed or no data - showing ProfileSetupScreen');
+          print(
+              '[ProfileChecker] Profile check failed or no data - showing ProfileSetupScreen');
           return ProfileSetupScreen(
             key: ValueKey(widget.uid),
             onProfileSaved: _refreshProfile,
@@ -192,7 +203,8 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
         }
 
         // Profile does NOT exist → show SetupProfileScreen
-        print('[ProfileChecker] Profile incomplete - showing ProfileSetupScreen');
+        print(
+            '[ProfileChecker] Profile incomplete - showing ProfileSetupScreen');
         return ProfileSetupScreen(
           key: ValueKey(widget.uid),
           onProfileSaved: _refreshProfile,

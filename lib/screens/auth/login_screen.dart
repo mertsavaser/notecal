@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Initialize Google Sign-In instance
       final GoogleSignIn googleSignIn = GoogleSignIn();
-      
+
       // Trigger the Google Sign-In flow
       print('[Google Sign-In] Requesting user sign-in...');
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -170,11 +170,13 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Firebase sign-in returned null user');
       }
 
-      print('[Google Sign-In] Successfully signed in: ${userCredential.user!.uid}');
+      print(
+          '[Google Sign-In] Successfully signed in: ${userCredential.user!.uid}');
 
       // Check if this is a new user and create base Firestore document
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        print('[Google Sign-In] New user detected, creating Firestore document...');
+        print(
+            '[Google Sign-In] New user detected, creating Firestore document...');
         try {
           await FirestoreHelper.createBaseUserDocument(
             userCredential.user!.uid,
@@ -197,16 +199,18 @@ class _LoginScreenState extends State<LoginScreen> {
       print('  Details: ${e.toString()}');
 
       String errorMessage = 'Google Sign-In failed';
-      
+
       switch (e.code) {
         case 'account-exists-with-different-credential':
-          errorMessage = 'An account already exists with this email using a different sign-in method.';
+          errorMessage =
+              'An account already exists with this email using a different sign-in method.';
           break;
         case 'invalid-credential':
           errorMessage = 'Invalid credentials. Please try again.';
           break;
         case 'operation-not-allowed':
-          errorMessage = 'Google Sign-In is not enabled. Please contact support.';
+          errorMessage =
+              'Google Sign-In is not enabled. Please contact support.';
           break;
         case 'user-disabled':
           errorMessage = 'This account has been disabled.';
@@ -246,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       String errorMessage = 'Google Sign-In failed: ${e.toString()}';
-      
+
       // Check for common configuration errors - only show if login actually failed
       if (e.toString().contains('PlatformException') ||
           e.toString().contains('DEVELOPER_ERROR') ||
@@ -254,16 +258,15 @@ class _LoginScreenState extends State<LoginScreen> {
         // Only show SHA error if it's a critical failure
         // Don't show for warnings that don't block login
         final errorString = e.toString().toLowerCase();
-        if (errorString.contains('network') || 
+        if (errorString.contains('network') ||
             errorString.contains('timeout') ||
             errorString.contains('cancelled')) {
           errorMessage = 'Google Sign-In was interrupted. Please try again.';
         } else {
           // Only show SHA configuration error for actual configuration failures
-          errorMessage = 
-            'Google Sign-In configuration error. '
-            'Please ensure SHA-1 and SHA-256 certificates are added to Firebase Console. '
-            'Get your SHA keys using: keytool -list -v -keystore android/app/debug.keystore';
+          errorMessage = 'Google Sign-In configuration error. '
+              'Please ensure SHA-1 and SHA-256 certificates are added to Firebase Console. '
+              'Get your SHA keys using: keytool -list -v -keystore android/app/debug.keystore';
         }
       }
 
@@ -472,4 +475,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

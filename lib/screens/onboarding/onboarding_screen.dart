@@ -51,7 +51,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _onGetStartedPressed() async {
     // Mark onboarding as completed
     await OnboardingHelper.setOnboardingCompleted();
-    
+
     // Navigate to LoginScreen
     if (mounted) {
       Navigator.pushReplacement(
@@ -168,4 +168,3 @@ class OnboardingPage {
     required this.subtitle,
   });
 }
-

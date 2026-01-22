@@ -3,12 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Edit Profile screen for editing body information and recalculating calories.
-/// 
+///
 /// Contains editable inputs for:
 /// - Weight, Height, Age
 /// - Gender (segmented control)
 /// - Activity Level (dropdown)
-/// 
+///
 /// Actions:
 /// - "Recalculate Daily Calories" button (primary)
 /// - "Cancel" button (secondary)
@@ -24,7 +24,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
   final _ageController = TextEditingController();
-  
+
   String _selectedGender = 'Male';
   String _selectedActivityLevel = 'Sedentary (little or no exercise)';
   bool _isRecalculating = false;
@@ -82,8 +82,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _ageController.text = (data['age'] as num?)?.toString() ?? '';
             final genderStr = data['gender'] ?? 'male';
             final genderString = genderStr as String;
-            _selectedGender = genderString.isEmpty 
-                ? 'Male' 
+            _selectedGender = genderString.isEmpty
+                ? 'Male'
                 : '${genderString[0].toUpperCase()}${genderString.substring(1).toLowerCase()}';
             _selectedActivityLevel = _getActivityLevelDisplayName(
               data['activityLevel'] as String? ?? 'sedentary',
@@ -117,7 +117,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   /// Calculate BMR using Mifflin-St Jeor equation
-  double _calculateBMR(double weightKg, double heightCm, int age, String gender) {
+  double _calculateBMR(
+      double weightKg, double heightCm, int age, String gender) {
     if (gender.toLowerCase() == 'male') {
       return 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
     } else {
@@ -161,10 +162,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         throw Exception('User not authenticated');
       }
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'weight': weight,
         'height': height,
         'age': age,
@@ -312,7 +310,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: _weightController,
                   label: 'Weight (kg)',
                   validator: _validateWeight,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.monitor_weight_outlined,
                 ),
                 const SizedBox(height: 20),
@@ -320,7 +319,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: _heightController,
                   label: 'Height (cm)',
                   validator: _validateHeight,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.height_outlined,
                 ),
                 const SizedBox(height: 20),
@@ -367,7 +367,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : const Text(
@@ -384,7 +385,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: _isRecalculating ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isRecalculating
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -433,14 +436,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           color: Colors.grey[600],
           fontWeight: FontWeight.w400,
         ),
-        prefixIcon: icon != null ? Icon(icon, color: Colors.grey[500], size: 22) : null,
+        prefixIcon:
+            icon != null ? Icon(icon, color: Colors.grey[500], size: 22) : null,
         filled: true,
         fillColor: Colors.grey[50],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
     );
   }
@@ -496,7 +501,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         value: _selectedActivityLevel,
         isExpanded: true,
         underline: const SizedBox(),
-        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 22),
+        icon:
+            Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 22),
         items: _activityFactors.keys.map((level) {
           return DropdownMenuItem<String>(
             value: level,
@@ -521,4 +527,3 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 }
-

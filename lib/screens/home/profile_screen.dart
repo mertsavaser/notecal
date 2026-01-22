@@ -5,7 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'edit_profile_screen.dart';
 
 /// Profile screen in view-only mode.
-/// 
+///
 /// Displays user profile information in clean, readable cards.
 /// Editing is done via EditProfileScreen (navigated to when Edit button is tapped).
 class ProfileScreen extends StatefulWidget {
@@ -107,10 +107,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Protein: 30% of calories, 4 calories per gram
     _proteinTarget = (tdee * 0.30) / 4;
-    
+
     // Carbs: 40% of calories, 4 calories per gram
     _carbsTarget = (tdee * 0.40) / 4;
-    
+
     // Fat: 30% of calories, 9 calories per gram
     _fatTarget = (tdee * 0.30) / 9;
   }
@@ -133,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _signOut() async {
     try {
       await FirebaseAuth.instance.signOut();
-      
+
       try {
         final GoogleSignIn googleSignIn = GoogleSignIn();
         await googleSignIn.signOut();
@@ -251,7 +251,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.edit_outlined, color: Colors.grey[600], size: 18),
+                        Icon(Icons.edit_outlined,
+                            color: Colors.grey[600], size: 18),
                         const SizedBox(width: 4),
                         Text(
                           'Edit',
@@ -269,13 +270,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          
+
           // Body information rows
-          _buildInfoRow('Weight', _weight != null ? '${_weight!.toStringAsFixed(1)}' : 'Not set', _weight != null ? 'kg' : null),
+          _buildInfoRow(
+              'Weight',
+              _weight != null ? '${_weight!.toStringAsFixed(1)}' : 'Not set',
+              _weight != null ? 'kg' : null),
           const SizedBox(height: 16),
-          _buildInfoRow('Height', _height != null ? '${_height!.toStringAsFixed(1)}' : 'Not set', _height != null ? 'cm' : null),
+          _buildInfoRow(
+              'Height',
+              _height != null ? '${_height!.toStringAsFixed(1)}' : 'Not set',
+              _height != null ? 'cm' : null),
           const SizedBox(height: 16),
-          _buildInfoRow('Age', _age != null ? '$_age' : 'Not set', _age != null ? 'years' : null),
+          _buildInfoRow('Age', _age != null ? '$_age' : 'Not set',
+              _age != null ? 'years' : null),
           const SizedBox(height: 16),
           _buildInfoRow('Gender', _gender ?? 'Not set', null),
           const SizedBox(height: 16),

@@ -7,7 +7,7 @@ class FirestoreHelper {
   static Future<bool> checkUserProfileExists(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
-      
+
       // Return true if document exists
       return doc.exists;
     } catch (e) {
@@ -21,43 +21,43 @@ class FirestoreHelper {
   static Future<bool> checkUserProfileComplete(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
-      
+
       // Document doesn't exist → profile not complete
       if (!doc.exists) {
         return false;
       }
-      
+
       final data = doc.data();
       if (data == null) {
         return false;
       }
-      
+
       // Profile is complete if it has firstName (required field from ProfileSetupScreen)
       // OR if it has updatedAt (set when profile is saved)
       // Base documents only have email and createdAt, so they won't have these fields
       final hasFirstName = data['firstName'] != null;
       final hasUpdatedAt = data['updatedAt'] != null;
-      
+
       return hasFirstName || hasUpdatedAt;
     } catch (e) {
       return false;
     }
   }
-  
+
   /// Check if user profile is completed (has profileCompleted flag set to true)
   static Future<bool> checkUserProfileCompleted(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
-      
+
       if (!doc.exists) {
         return false;
       }
-      
+
       final data = doc.data();
       if (data == null) {
         return false;
       }
-      
+
       // Profile is considered complete if profileCompleted is true
       return data['profileCompleted'] == true;
     } catch (e) {
@@ -92,6 +92,3 @@ class FirestoreHelper {
     });
   }
 }
-
-
-

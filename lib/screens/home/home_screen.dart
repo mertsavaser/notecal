@@ -10,7 +10,7 @@ import '../../bottom_sheets/add_meal_bottom_sheet.dart';
 import '../../bottom_sheets/food_action_bottom_sheet.dart';
 
 /// HomeScreen with real-time Firestore updates via StreamBuilder.
-/// 
+///
 /// Architecture:
 /// - Uses StreamBuilder to listen to Firestore changes (real-time UI updates)
 /// - Maintains optimistic local state for instant UI feedback when adding foods
@@ -26,13 +26,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final MealService _mealService = MealService();
-  
+
   // Calorie and macro targets (loaded from user profile)
   double? _dailyCalorieTarget;
   double? _proteinTarget;
   double? _carbsTarget;
   double? _fatTarget;
-  
+
   // Cache the Future to prevent recreation on every build
   Future<Map<String, double?>>? _macroTargetsFuture;
 
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Initialize macro targets future ONCE
     _macroTargetsFuture = _loadMacroTargets();
-    
+
     // Move async operations to postFrameCallback to avoid blocking build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Ensure system meals exist when HomeScreen loads (fire and forget)
@@ -77,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (doc.exists) {
         final data = doc.data();
         final tdee = (data?['tdee'] as num?)?.toDouble();
-        
+
         if (tdee != null) {
           return {
             'dailyCalorieTarget': tdee,
@@ -90,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       print('[HomeScreen] Error loading macro targets: $e');
     }
-    
+
     return {
       'dailyCalorieTarget': null,
       'proteinTarget': null,
@@ -100,9 +100,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Show rename meal dialog
-  void _showRenameMealDialog(BuildContext context, String mealId, String currentName) {
+  void _showRenameMealDialog(
+      BuildContext context, String mealId, String currentName) {
     final controller = TextEditingController(text: currentName);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -167,16 +168,16 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               onTap: () async {
-              final newName = controller.text.trim();
-              if (newName.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Meal name cannot be empty'),
-                    backgroundColor: Colors.orange,
-                  ),
-                );
-                return;
-              }
+                final newName = controller.text.trim();
+                if (newName.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Meal name cannot be empty'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
 
                 if (newName == currentName) {
                   Navigator.of(context).pop();
@@ -184,7 +185,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
 
                 try {
-                  final success = await _mealService.renameMeal(_todayDate, mealId, newName);
+                  final success = await _mealService.renameMeal(
+                      _todayDate, mealId, newName);
                   if (context.mounted) {
                     Navigator.of(context).pop();
                     if (!success) {
@@ -213,7 +215,8 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               borderRadius: BorderRadius.circular(14),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: const Text(
                   'Save',
                   style: TextStyle(
@@ -231,7 +234,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Show delete meal confirmation dialog
-  void _showDeleteMealDialog(BuildContext context, String mealId, String mealName, int foodCount) {
+  void _showDeleteMealDialog(
+      BuildContext context, String mealId, String mealName, int foodCount) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -314,9 +318,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _signOut(BuildContext context) async {
     try {
       print('[HomeScreen] Signing out user...');
-      
+
       await FirebaseAuth.instance.signOut();
-      
+
       try {
         final GoogleSignIn googleSignIn = GoogleSignIn();
         await googleSignIn.signOut();
@@ -324,8 +328,9 @@ class _HomeScreenState extends State<HomeScreen> {
       } catch (e) {
         print('[HomeScreen] Google Sign-In sign out error (ignored): $e');
       }
-      
-      print('[HomeScreen] Sign out complete - AuthWrapper will handle navigation');
+
+      print(
+          '[HomeScreen] Sign out complete - AuthWrapper will handle navigation');
     } catch (e) {
       print('[HomeScreen] Error signing out: $e');
       if (context.mounted) {
@@ -358,7 +363,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Show Food Action bottom sheet
-  void _showFoodActionBottomSheet(BuildContext context, Map<String, dynamic> food, String mealId) {
+  void _showFoodActionBottomSheet(
+      BuildContext context, Map<String, dynamic> food, String mealId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -394,7 +400,6 @@ class _HomeScreenState extends State<HomeScreen> {
   //     _optimisticFoods[mealType]?.remove(foodId);
   //   });
   // }
-
 
   @override
   Widget build(BuildContext context) {
@@ -473,8 +478,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, targetsSnapshot) {
         // Update state ONCE when targets are loaded (not on every build)
         // Only update if we haven't set the values yet
-        if (targetsSnapshot.hasData && 
-            _dailyCalorieTarget == null && 
+        if (targetsSnapshot.hasData &&
+            _dailyCalorieTarget == null &&
             _proteinTarget == null) {
           final targets = targetsSnapshot.data!;
           // Update synchronously in the same frame to avoid rebuild loop
@@ -492,11 +497,12 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           }
         }
-        
+
         // Always return visible UI immediately, even if FutureBuilder is loading
         return SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -515,7 +521,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.logout, color: Colors.grey[700], size: 22),
+                      icon:
+                          Icon(Icons.logout, color: Colors.grey[700], size: 22),
                       onPressed: () => _signOut(context),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
@@ -526,23 +533,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 32),
-            
+
                 // Daily Summary Card (with StreamBuilder for real-time updates)
                 StreamBuilder<Map<String, dynamic>?>(
                   stream: _mealService.getDailySummaryStream(_todayDate),
                   builder: (context, summarySnapshot) {
                     // Handle errors - show fallback UI
                     if (summarySnapshot.hasError) {
-                      print('[HomeScreen] Error in daily summary stream: ${summarySnapshot.error}');
+                      print(
+                          '[HomeScreen] Error in daily summary stream: ${summarySnapshot.error}');
                     }
-                    
+
                     // Calculate from meals stream if summary not available
                     return StreamBuilder<List<Map<String, dynamic>>>(
                       stream: _mealService.getDayMealsStream(_todayDate),
                       builder: (context, mealsSnapshot) {
                         // Handle errors - show fallback UI
                         if (mealsSnapshot.hasError) {
-                          print('[HomeScreen] Error in meals stream: ${mealsSnapshot.error}');
+                          print(
+                              '[HomeScreen] Error in meals stream: ${mealsSnapshot.error}');
                           // Return error UI instead of empty
                           return Container(
                             padding: const EdgeInsets.all(32.0),
@@ -553,7 +562,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(Icons.error_outline, size: 32, color: Colors.grey[400]),
+                                  Icon(Icons.error_outline,
+                                      size: 32, color: Colors.grey[400]),
                                   const SizedBox(height: 12),
                                   Text(
                                     'Error loading daily summary',
@@ -568,37 +578,52 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         }
-                        
+
                         // Show loading if both streams are waiting
-                        if ((summarySnapshot.connectionState == ConnectionState.waiting && !summarySnapshot.hasData) ||
-                            (mealsSnapshot.connectionState == ConnectionState.waiting && !mealsSnapshot.hasData)) {
+                        if ((summarySnapshot.connectionState ==
+                                    ConnectionState.waiting &&
+                                !summarySnapshot.hasData) ||
+                            (mealsSnapshot.connectionState ==
+                                    ConnectionState.waiting &&
+                                !mealsSnapshot.hasData)) {
                           return Container(
                             padding: const EdgeInsets.all(48.0),
                             child: const Center(
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF4A90E2)),
                               ),
                             ),
                           );
                         }
-                        
+
                         double totalCalories = 0.0;
                         double totalProtein = 0.0;
                         double totalCarbs = 0.0;
                         double totalFat = 0.0;
-                        
-                        if (summarySnapshot.hasData && summarySnapshot.data != null) {
+
+                        if (summarySnapshot.hasData &&
+                            summarySnapshot.data != null) {
                           // Use stored summary if available
                           final summary = summarySnapshot.data!;
-                          totalCalories = (summary['totalCalories'] as num?)?.toDouble() ?? 0.0;
-                          totalProtein = (summary['totalProtein'] as num?)?.toDouble() ?? 0.0;
-                          totalCarbs = (summary['totalCarbs'] as num?)?.toDouble() ?? 0.0;
-                          totalFat = (summary['totalFat'] as num?)?.toDouble() ?? 0.0;
+                          totalCalories =
+                              (summary['totalCalories'] as num?)?.toDouble() ??
+                                  0.0;
+                          totalProtein =
+                              (summary['totalProtein'] as num?)?.toDouble() ??
+                                  0.0;
+                          totalCarbs =
+                              (summary['totalCarbs'] as num?)?.toDouble() ??
+                                  0.0;
+                          totalFat =
+                              (summary['totalFat'] as num?)?.toDouble() ?? 0.0;
                         } else if (mealsSnapshot.hasData) {
                           // Calculate from meals data
                           for (final meal in mealsSnapshot.data!) {
-                            final foods = meal['foods'] as List<Map<String, dynamic>>? ?? [];
+                            final foods =
+                                meal['foods'] as List<Map<String, dynamic>>? ??
+                                    [];
                             totalCalories += _calculateTotalCalories(foods);
                             totalProtein += _calculateTotalProtein(foods);
                             totalCarbs += _calculateTotalCarbs(foods);
@@ -618,7 +643,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 48),
-                
+
                 // Meals Section Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -635,7 +660,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     TextButton(
                       onPressed: _showAddMealBottomSheet,
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -658,120 +684,125 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Meal Cards (with StreamBuilder for real-time updates)
-            // Meals are already sorted by MealService: Breakfast, Lunch, Dinner, then custom meals
-            StreamBuilder<List<Map<String, dynamic>>>(
-              stream: _mealService.getDayMealsStream(_todayDate),
-              builder: (context, snapshot) {
-                // Handle errors
-                if (snapshot.hasError) {
-                  print('[HomeScreen] Error loading meals: ${snapshot.error}');
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 48.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.error_outline, size: 40, color: Colors.grey[400]),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error loading meals',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey[700],
-                            ),
+                // Meals are already sorted by MealService: Breakfast, Lunch, Dinner, then custom meals
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: _mealService.getDayMealsStream(_todayDate),
+                  builder: (context, snapshot) {
+                    // Handle errors
+                    if (snapshot.hasError) {
+                      print(
+                          '[HomeScreen] Error loading meals: ${snapshot.error}');
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 48.0),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(Icons.error_outline,
+                                  size: 40, color: Colors.grey[400]),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Error loading meals',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                snapshot.error.toString(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            snapshot.error.toString(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[500],
-                              fontWeight: FontWeight.w400,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                
-                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(vertical: 48.0),
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
-                      ),
-                    ),
-                  );
-                }
-
-                final meals = snapshot.data ?? [];
-                
-                // Filter out any meals without names (shouldn't happen, but safety check)
-                final validMeals = meals.where((meal) {
-                  final name = meal['name'] as String?;
-                  return name != null && name.trim().isNotEmpty;
-                }).toList();
-
-                if (validMeals.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 64.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.restaurant_outlined,
-                            size: 56,
-                            color: Colors.grey[300],
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'No meals yet',
-                            style: TextStyle(
-                              fontSize: 17,
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Tap "Add Meal" to get started',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: validMeals.map((meal) {
-                    final foods = meal['foods'] as List<Map<String, dynamic>>? ?? [];
-                    final mealName = meal['name'] as String?;
-                    // Skip meals without names (shouldn't happen with guards)
-                    // Return empty container instead of SizedBox.shrink to ensure rendering
-                    if (mealName == null || mealName.trim().isEmpty) {
-                      return const SizedBox(height: 0);
+                        ),
+                      );
                     }
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 24.0),
-                      child: _buildMealCard(meal, foods),
+
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(vertical: 48.0),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF4A90E2)),
+                          ),
+                        ),
+                      );
+                    }
+
+                    final meals = snapshot.data ?? [];
+
+                    // Filter out any meals without names (shouldn't happen, but safety check)
+                    final validMeals = meals.where((meal) {
+                      final name = meal['name'] as String?;
+                      return name != null && name.trim().isNotEmpty;
+                    }).toList();
+
+                    if (validMeals.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 64.0),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.restaurant_outlined,
+                                size: 56,
+                                color: Colors.grey[300],
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                'No meals yet',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap "Add Meal" to get started',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: validMeals.map((meal) {
+                        final foods =
+                            meal['foods'] as List<Map<String, dynamic>>? ?? [];
+                        final mealName = meal['name'] as String?;
+                        // Skip meals without names (shouldn't happen with guards)
+                        // Return empty container instead of SizedBox.shrink to ensure rendering
+                        if (mealName == null || mealName.trim().isEmpty) {
+                          return const SizedBox(height: 0);
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 24.0),
+                          child: _buildMealCard(meal, foods),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
-                );
-              },
+                  },
                 ),
-                
+
                 // Extra padding for FAB
                 const SizedBox(height: 80),
               ],
@@ -821,7 +852,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontSize: 72,
                     fontWeight: FontWeight.w500,
                     height: 1.0,
-                    color: remainingCalories < 0 
+                    color: remainingCalories < 0
                         ? const Color(0xFFE63946)
                         : const Color(0xFF1A1A1A),
                     letterSpacing: -3,
@@ -841,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 40),
-          
+
           // Progress Bar (thicker, rounded, gradient)
           TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0.0, end: progress),
@@ -873,7 +904,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           const SizedBox(height: 28),
-          
+
           // Secondary: Target / Consumed / Remaining breakdown
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -883,9 +914,11 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSecondaryStat('Remaining', remainingCalories.round()),
             ],
           ),
-          
+
           // Macro Summary with progress bars
-          if (_proteinTarget != null || _carbsTarget != null || _fatTarget != null) ...[
+          if (_proteinTarget != null ||
+              _carbsTarget != null ||
+              _fatTarget != null) ...[
             const SizedBox(height: 36),
             _buildMacroRowWithProgress(
               'Protein',
@@ -914,7 +947,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Build macro row with mini progress bar
-  Widget _buildMacroRowWithProgress(String label, double consumed, double target, Color color) {
+  Widget _buildMacroRowWithProgress(
+      String label, double consumed, double target, Color color) {
     final progress = target > 0 ? (consumed / target).clamp(0.0, 1.0) : 0.0;
     // Create even more muted color by blending with white (15% color, 85% white)
     final mutedColor = Color.fromRGBO(
@@ -923,7 +957,7 @@ class _HomeScreenState extends State<HomeScreen> {
       (color.blue * 0.15 + 255 * 0.85).round(),
       1.0,
     );
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1005,7 +1039,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMealCard(Map<String, dynamic> meal, List<Map<String, dynamic>> foods) {
+  Widget _buildMealCard(
+      Map<String, dynamic> meal, List<Map<String, dynamic>> foods) {
     final mealId = meal['id'] as String;
     // Guard: Meal name should always be present (enforced by MealService)
     // If missing, this indicates a data integrity issue
@@ -1083,12 +1118,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 4),
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, color: Colors.grey[500], size: 20),
+                    icon: Icon(Icons.more_vert,
+                        color: Colors.grey[500], size: 20),
                     onSelected: (value) {
                       if (value == 'rename') {
                         _showRenameMealDialog(context, mealId, mealName);
                       } else if (value == 'delete') {
-                        _showDeleteMealDialog(context, mealId, mealName, foods.length);
+                        _showDeleteMealDialog(
+                            context, mealId, mealName, foods.length);
                       }
                     },
                     itemBuilder: (context) => [
@@ -1118,7 +1155,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          
+
           // Macro summary (P: Xg C: Yg F: Zg)
           if (mealProtein > 0 || mealCarbs > 0 || mealFat > 0) ...[
             const SizedBox(height: 14),
@@ -1132,9 +1169,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
-          
+
           const SizedBox(height: 24),
-          
+
           // Food List
           if (foods.isEmpty)
             Padding(
@@ -1157,11 +1194,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: foodId != null
-                        ? () => _showFoodActionBottomSheet(context, food, mealId)
+                        ? () =>
+                            _showFoodActionBottomSheet(context, food, mealId)
                         : null,
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 4.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -1199,9 +1238,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             }),
-          
+
           const SizedBox(height: 12),
-          
+
           // Add Food Button
           SizedBox(
             width: double.infinity,
@@ -1237,4 +1276,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-

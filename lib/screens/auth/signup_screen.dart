@@ -93,7 +93,7 @@ class _SignupScreenState extends State<SignupScreen> {
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'An error occurred';
-      
+
       switch (e.code) {
         case 'email-already-in-use':
           errorMessage = 'This email is already registered';
@@ -240,4 +240,3 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 }
-

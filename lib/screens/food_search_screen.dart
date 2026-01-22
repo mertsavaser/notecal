@@ -20,7 +20,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FirestoreFoodService _foodService = FirestoreFoodService();
   Timer? _debounceTimer;
-  
+
   List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
   bool _hasSearched = false;
@@ -44,7 +44,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
   Future<void> _performSearch() async {
     final query = _searchController.text.trim();
-    
+
     // Don't query for length < 2
     if (query.isEmpty || query.length < 2) {
       setState(() {

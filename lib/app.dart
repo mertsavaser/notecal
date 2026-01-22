@@ -32,4 +32,3 @@ class NotecalApp extends StatelessWidget {
     );
   }
 }
-

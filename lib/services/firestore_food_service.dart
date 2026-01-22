@@ -13,23 +13,25 @@ class FirestoreFoodService {
     if (value == null) {
       return defaultValue;
     }
-    
+
     if (value is num) {
       return value.toDouble();
     }
-    
+
     if (value is String) {
       final parsed = double.tryParse(value);
       if (parsed != null) {
         return parsed;
       }
       // Log malformed string value
-      print('[DEBUG] Warning: Failed to parse String to double: "$value", using default: $defaultValue');
+      print(
+          '[DEBUG] Warning: Failed to parse String to double: "$value", using default: $defaultValue');
       return defaultValue;
     }
-    
+
     // Log unexpected type
-    print('[DEBUG] Warning: Unexpected type for numeric field: ${value.runtimeType}, value: $value, using default: $defaultValue');
+    print(
+        '[DEBUG] Warning: Unexpected type for numeric field: ${value.runtimeType}, value: $value, using default: $defaultValue');
     return defaultValue;
   }
 
@@ -44,7 +46,7 @@ class FirestoreFoodService {
 
     // Convert to lowercase for case-insensitive search
     final lowerQuery = query.toLowerCase().trim();
-    
+
     // DEBUG: Print search query
     print('[DEBUG] Search query: "$lowerQuery"');
 
@@ -60,23 +62,24 @@ class FirestoreFoodService {
           .get();
 
       print('[DEBUG] Found ${querySnapshot.docs.length} documents');
-      
+
       // DEBUG: Print first 3 documents' name_lowercase
       final results = <Map<String, dynamic>>[];
-      
+
       for (final doc in querySnapshot.docs) {
         try {
           final data = doc.data();
           final name = data['name']?.toString() ?? '';
           final nameLowercase = data['name_lowercase']?.toString();
-          
+
           // Safely parse all numeric fields
           final calories = _safeParseDouble(data['calories']);
           final protein = _safeParseDouble(data['protein']);
           final carbs = _safeParseDouble(data['carbs']);
           final fat = _safeParseDouble(data['fat']);
-          final servingSize = _safeParseDouble(data['serving_size'], defaultValue: 100.0);
-          
+          final servingSize =
+              _safeParseDouble(data['serving_size'], defaultValue: 100.0);
+
           results.add({
             'id': doc.id,
             'name': name,
@@ -94,22 +97,24 @@ class FirestoreFoodService {
           print('[DEBUG] Document data: ${doc.data()}');
         }
       }
-      
+
       // DEBUG: Print first 3 name_lowercase values
       for (int i = 0; i < results.length && i < 3; i++) {
-        print('[DEBUG] Result ${i + 1} name_lowercase: "${results[i]['name_lowercase']}"');
+        print(
+            '[DEBUG] Result ${i + 1} name_lowercase: "${results[i]['name_lowercase']}"');
       }
-      
+
       return results;
     } catch (e, stackTrace) {
       print('[DEBUG] Error searching foods: $e');
       print('[DEBUG] Stack trace: $stackTrace');
-      
+
       // Check if error is about missing index
       if (e.toString().contains('index') || e.toString().contains('Index')) {
-        print('[DEBUG] Firestore index required! Create index: Collection=foods, Field=name_lowercase (Ascending)');
+        print(
+            '[DEBUG] Firestore index required! Create index: Collection=foods, Field=name_lowercase (Ascending)');
       }
-      
+
       return [];
     }
   }
@@ -200,4 +205,3 @@ class FirestoreFoodService {
     });
   }
 }
-

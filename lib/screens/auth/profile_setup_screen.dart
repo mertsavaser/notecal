@@ -22,7 +22,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _ageController = TextEditingController();
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
-  
+
   String _selectedGender = 'Male';
   String _selectedActivityLevel = 'Sedentary (little or no exercise)';
   bool _isLoading = false;
@@ -111,7 +111,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     return null;
   }
 
-  double _calculateBMR(double weightKg, double heightCm, int age, String gender) {
+  double _calculateBMR(
+      double weightKg, double heightCm, int age, String gender) {
     // Mifflin-St Jeor equation
     if (gender.toLowerCase() == 'male') {
       return 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
@@ -139,10 +140,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     final uid = user.uid;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set({
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
       'firstName': firstName,
       'lastName': lastName,
       'age': age,
@@ -321,9 +319,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.black
-                      : Colors.transparent,
+                  color: isSelected ? Colors.black : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
@@ -361,9 +357,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? Colors.black
-                    : const Color(0xFFF8F8F8),
+                color: isSelected ? Colors.black : const Color(0xFFF8F8F8),
                 borderRadius: BorderRadius.circular(16),
                 border: isSelected
                     ? null
@@ -374,9 +368,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? Colors.white
-                      : const Color(0xFF1A1A1A),
+                  color: isSelected ? Colors.white : const Color(0xFF1A1A1A),
                 ),
               ),
             ),
@@ -446,7 +438,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   controller: _heightController,
                   placeholder: 'Height (cm)',
                   validator: _validateHeight,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.height_outlined,
                 ),
                 const SizedBox(height: 24),
@@ -454,7 +447,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   controller: _weightController,
                   placeholder: 'Weight (kg)',
                   validator: _validateWeight,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.monitor_weight_outlined,
                 ),
                 const SizedBox(height: 28),

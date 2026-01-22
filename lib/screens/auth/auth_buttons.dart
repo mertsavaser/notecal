@@ -100,4 +100,3 @@ class AppleAuthButton extends StatelessWidget {
     );
   }
 }
-

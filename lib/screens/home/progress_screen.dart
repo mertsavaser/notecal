@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/meal_service.dart';
 
 /// Progress screen showing weekly calorie tracking and adherence score.
-/// 
+///
 /// Features:
 /// - Current week date range (Monday-Sunday)
 /// - List of days with total calories consumed
@@ -41,7 +41,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       if (doc.exists && mounted) {
         final data = doc.data();
         final tdee = (data?['tdee'] as num?)?.toDouble();
-        
+
         if (tdee != null && mounted) {
           setState(() {
             _dailyCalorieTarget = tdee;
@@ -89,7 +89,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
         return FutureBuilder<Map<String, Map<String, dynamic>?>>(
           future: _mealService.getWeeklySummaries(_weekDates),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
               return const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Center(child: CircularProgressIndicator()),
@@ -100,64 +101,65 @@ class _ProgressScreenState extends State<ProgressScreen> {
             final score = _calculateWeeklyScoreSync(summariesMap);
             final message = _getScoreMessage(score);
 
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.fromLTRB(32, 40, 32, 36),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 12,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.fromLTRB(32, 40, 32, 36),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 12,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Column(
-                    children: [
-                      Text(
-                        '${score.round()}%',
-                        style: const TextStyle(
-                          fontSize: 64,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF1A1A1A),
-                          height: 1.0,
-                          letterSpacing: -2,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        message,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.1,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Weekly Score',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[400],
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
+                ],
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    '${score.round()}%',
+                    style: const TextStyle(
+                      fontSize: 64,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1A1A1A),
+                      height: 1.0,
+                      letterSpacing: -2,
+                    ),
                   ),
-                );
-              },
+                  const SizedBox(height: 16),
+                  Text(
+                    message,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.1,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Weekly Score',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[400],
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         );
+      },
+    );
   }
 
   /// Calculate weekly score synchronously
-  double _calculateWeeklyScoreSync(Map<String, Map<String, dynamic>?> summaries) {
+  double _calculateWeeklyScoreSync(
+      Map<String, Map<String, dynamic>?> summaries) {
     double totalDeviation = 0.0;
     int daysWithData = 0;
 
@@ -179,7 +181,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     // Average deviation
     final avgDeviation = totalDeviation / daysWithData;
-    
+
     // Convert to score: 100% = perfect adherence (0% deviation)
     // Score decreases as deviation increases
     final score = (1.0 - avgDeviation.clamp(0.0, 1.0)) * 100;
@@ -219,9 +221,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 try {
                   return _buildWeeklyScoreCard();
                 } catch (e) {
-                  print('[ProgressScreen] Error building weekly score card: $e');
+                  print(
+                      '[ProgressScreen] Error building weekly score card: $e');
                   return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     padding: const EdgeInsets.all(20.0),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
@@ -278,12 +282,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       itemBuilder: (context, index) {
                         final date = _weekDates[index];
                         final isToday = date == _mealService.getTodayDate();
-                        
+
                         return StreamBuilder<Map<String, dynamic>?>(
                           stream: _mealService.getDailySummaryStream(date),
                           builder: (context, summarySnapshot) {
                             final summary = summarySnapshot.data;
-                            final calories = (summary?['totalCalories'] as num?)?.toDouble() ?? 0.0;
+                            final calories = (summary?['totalCalories'] as num?)
+                                    ?.toDouble() ??
+                                0.0;
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 20),
@@ -294,21 +300,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   onTap: () => _showDayDetails(context, date),
                                   borderRadius: BorderRadius.circular(20),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20.0, vertical: 18.0),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(20),
                                       color: isToday
-                                          ? const Color(0xFF4A90E2).withValues(alpha: 0.03)
+                                          ? const Color(0xFF4A90E2)
+                                              .withValues(alpha: 0.03)
                                           : null,
                                       border: isToday
                                           ? Border.all(
-                                              color: const Color(0xFF4A90E2).withValues(alpha: 0.2),
+                                              color: const Color(0xFF4A90E2)
+                                                  .withValues(alpha: 0.2),
                                               width: 1,
                                             )
                                           : null,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.02),
+                                          color: Colors.black
+                                              .withValues(alpha: 0.02),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -318,7 +328,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Row(
                                                 children: [
@@ -326,30 +337,43 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                                     _formatDateDisplay(date),
                                                     style: TextStyle(
                                                       fontSize: 16,
-                                                      fontWeight: FontWeight.w500,
+                                                      fontWeight:
+                                                          FontWeight.w500,
                                                       color: isToday
-                                                          ? const Color(0xFF4A90E2)
-                                                          : const Color(0xFF1A1A1A),
+                                                          ? const Color(
+                                                              0xFF4A90E2)
+                                                          : const Color(
+                                                              0xFF1A1A1A),
                                                       letterSpacing: -0.2,
                                                     ),
                                                   ),
                                                   if (isToday) ...[
                                                     const SizedBox(width: 8),
                                                     Container(
-                                                      padding: const EdgeInsets.symmetric(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
                                                         horizontal: 8,
                                                         vertical: 3,
                                                       ),
                                                       decoration: BoxDecoration(
-                                                        color: const Color(0xFF4A90E2).withValues(alpha: 0.08),
-                                                        borderRadius: BorderRadius.circular(8),
+                                                        color: const Color(
+                                                                0xFF4A90E2)
+                                                            .withValues(
+                                                                alpha: 0.08),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
                                                       ),
                                                       child: Text(
                                                         'Today',
                                                         style: TextStyle(
                                                           fontSize: 11,
-                                                          fontWeight: FontWeight.w500,
-                                                          color: const Color(0xFF4A90E2).withValues(alpha: 0.8),
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: const Color(
+                                                                  0xFF4A90E2)
+                                                              .withValues(
+                                                                  alpha: 0.8),
                                                           letterSpacing: 0.2,
                                                         ),
                                                       ),
@@ -377,18 +401,23 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                         if (calories > 0)
                                           Builder(
                                             builder: (context) {
-                                              final calorieTarget = _dailyCalorieTarget ?? 2000.0;
-                                              final progress = (calories / calorieTarget).clamp(0.0, 1.0);
+                                              final calorieTarget =
+                                                  _dailyCalorieTarget ?? 2000.0;
+                                              final progress =
+                                                  (calories / calorieTarget)
+                                                      .clamp(0.0, 1.0);
                                               return SizedBox(
                                                 width: 56,
                                                 child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
                                                   children: [
                                                     Text(
                                                       '${(progress * 100).round()}%',
                                                       style: TextStyle(
                                                         fontSize: 13,
-                                                        fontWeight: FontWeight.w500,
+                                                        fontWeight:
+                                                            FontWeight.w500,
                                                         color: Colors.grey[700],
                                                       ),
                                                     ),
@@ -396,18 +425,29 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                                     Container(
                                                       height: 4,
                                                       decoration: BoxDecoration(
-                                                        borderRadius: BorderRadius.circular(4),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(4),
                                                         color: Colors.grey[100],
                                                       ),
-                                                      child: FractionallySizedBox(
-                                                        alignment: Alignment.centerLeft,
+                                                      child:
+                                                          FractionallySizedBox(
+                                                        alignment: Alignment
+                                                            .centerLeft,
                                                         widthFactor: progress,
                                                         child: Container(
-                                                          decoration: BoxDecoration(
-                                                            borderRadius: BorderRadius.circular(4),
-                                                            color: progress > 1.0
-                                                                ? const Color(0xFFFFB74D)
-                                                                : const Color(0xFF4A90E2),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        4),
+                                                            color: progress >
+                                                                    1.0
+                                                                ? const Color(
+                                                                    0xFFFFB74D)
+                                                                : const Color(
+                                                                    0xFF4A90E2),
                                                           ),
                                                         ),
                                                       ),
@@ -572,11 +612,13 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final meal = meals[index];
                     final mealName = meal['name'] as String? ?? 'Unknown';
-                    final foods = meal['foods'] as List<Map<String, dynamic>>? ?? [];
-                    
+                    final foods =
+                        meal['foods'] as List<Map<String, dynamic>>? ?? [];
+
                     double mealCalories = 0.0;
                     for (final food in foods) {
-                      mealCalories += ((food['calories'] as num?)?.toDouble() ?? 0.0);
+                      mealCalories +=
+                          ((food['calories'] as num?)?.toDouble() ?? 0.0);
                     }
 
                     final hasNoCalories = mealCalories == 0.0;
@@ -595,14 +637,16 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     mealName,
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF1A1A1A).withValues(alpha: hasNoCalories ? 0.6 : 1.0),
+                                      color: const Color(0xFF1A1A1A).withValues(
+                                          alpha: hasNoCalories ? 0.6 : 1.0),
                                       letterSpacing: -0.2,
                                     ),
                                   ),
@@ -611,7 +655,9 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 17,
                                       fontWeight: FontWeight.w500,
-                                      color: (Colors.grey[700] ?? Colors.grey).withValues(alpha: hasNoCalories ? 0.5 : 1.0),
+                                      color: (Colors.grey[700] ?? Colors.grey)
+                                          .withValues(
+                                              alpha: hasNoCalories ? 0.5 : 1.0),
                                     ),
                                   ),
                                   Text(
@@ -619,7 +665,9 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
-                                      color: (Colors.grey[600] ?? Colors.grey).withValues(alpha: hasNoCalories ? 0.5 : 1.0),
+                                      color: (Colors.grey[600] ?? Colors.grey)
+                                          .withValues(
+                                              alpha: hasNoCalories ? 0.5 : 1.0),
                                     ),
                                   ),
                                 ],
@@ -628,16 +676,23 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                                 const SizedBox(height: 16),
                                 ...foods.map((food) {
                                   return Padding(
-                                    padding: const EdgeInsets.only(bottom: 10.0),
+                                    padding:
+                                        const EdgeInsets.only(bottom: 10.0),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Expanded(
                                           child: Text(
                                             food['name'] ?? 'Unknown',
                                             style: TextStyle(
                                               fontSize: 15,
-                                              color: (Colors.grey[700] ?? Colors.grey).withValues(alpha: hasNoCalories ? 0.5 : 0.8),
+                                              color: (Colors.grey[700] ??
+                                                      Colors.grey)
+                                                  .withValues(
+                                                      alpha: hasNoCalories
+                                                          ? 0.5
+                                                          : 0.8),
                                               fontWeight: FontWeight.w400,
                                               height: 1.4,
                                             ),
@@ -648,7 +703,12 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w500,
-                                            color: (Colors.grey[700] ?? Colors.grey).withValues(alpha: hasNoCalories ? 0.4 : 0.7),
+                                            color: (Colors.grey[700] ??
+                                                    Colors.grey)
+                                                .withValues(
+                                                    alpha: hasNoCalories
+                                                        ? 0.4
+                                                        : 0.7),
                                           ),
                                         ),
                                         Text(
@@ -656,7 +716,12 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w400,
-                                            color: (Colors.grey[600] ?? Colors.grey).withValues(alpha: hasNoCalories ? 0.4 : 0.6),
+                                            color: (Colors.grey[600] ??
+                                                    Colors.grey)
+                                                .withValues(
+                                                    alpha: hasNoCalories
+                                                        ? 0.4
+                                                        : 0.6),
                                           ),
                                         ),
                                       ],
@@ -685,7 +750,15 @@ class _DayDetailsBottomSheet extends StatelessWidget {
     final date = MealService.parseDate(dateString);
     if (date == null) return dateString;
 
-    final weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
     final weekday = weekdays[date.weekday - 1];
     return '$weekday, ${date.month}/${date.day}/${date.year}';
   }

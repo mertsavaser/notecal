@@ -46,4 +46,3 @@ class CustomSearchBar extends StatelessWidget {
     );
   }
 }
-

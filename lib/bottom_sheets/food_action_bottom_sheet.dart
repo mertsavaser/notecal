@@ -22,7 +22,7 @@ class FoodActionBottomSheet extends StatefulWidget {
 class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
   final MealService _mealService = MealService();
   final TextEditingController _amountController = TextEditingController();
-  
+
   String _selectedServingUnit = 'g';
   double _amount = 100.0;
   bool _isLoading = false;
@@ -150,7 +150,8 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
               onTap: () => Navigator.of(context).pop(true),
               borderRadius: BorderRadius.circular(14),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: const Text(
                   'Remove',
                   style: TextStyle(
@@ -311,16 +312,20 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                                   ),
                                   child: Container(
                                     padding: const EdgeInsets.all(14),
-                                    child: Icon(Icons.remove, color: Colors.grey[600], size: 20),
+                                    child: Icon(Icons.remove,
+                                        color: Colors.grey[600], size: 20),
                                   ),
                                 ),
                               ),
                               Expanded(
                                 child: TextField(
                                   controller: _amountController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                          decimal: true),
                                   inputFormatters: [
-                                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp(r'^\d+\.?\d{0,2}')),
                                   ],
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
@@ -330,7 +335,8 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                                   ),
                                   decoration: const InputDecoration(
                                     border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                                    contentPadding:
+                                        EdgeInsets.symmetric(vertical: 12),
                                   ),
                                   onChanged: (value) {
                                     final parsed = double.tryParse(value);
@@ -352,7 +358,8 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                                   ),
                                   child: Container(
                                     padding: const EdgeInsets.all(14),
-                                    child: Icon(Icons.add, color: Colors.grey[600], size: 20),
+                                    child: Icon(Icons.add,
+                                        color: Colors.grey[600], size: 20),
                                   ),
                                 ),
                               ),
@@ -362,7 +369,8 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                       ),
                       const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.grey[50],
                           borderRadius: BorderRadius.circular(18),
@@ -370,7 +378,8 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                         child: DropdownButton<String>(
                           value: _selectedServingUnit,
                           underline: const SizedBox(),
-                          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 22),
+                          icon: Icon(Icons.keyboard_arrow_down,
+                              color: Colors.grey[500], size: 22),
                           items: _servingUnits.map((String unit) {
                             return DropdownMenuItem<String>(
                               value: unit,
@@ -421,7 +430,8 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
                           : const Text(

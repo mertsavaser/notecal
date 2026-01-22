@@ -39,7 +39,7 @@ class _RootWrapperState extends State<RootWrapper> {
   @override
   Widget build(BuildContext context) {
     print('[RootWrapper] build() called');
-    
+
     // Initialize if not done yet
     if (_onboardingCheckFuture == null) {
       print('[RootWrapper] Initializing onboarding check...');
@@ -54,9 +54,11 @@ class _RootWrapperState extends State<RootWrapper> {
     return FutureBuilder<bool>(
       future: _onboardingCheckFuture,
       builder: (context, snapshot) {
-        print('[RootWrapper] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
-        print('[RootWrapper] FutureBuilder - hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
-        
+        print(
+            '[RootWrapper] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
+        print(
+            '[RootWrapper] FutureBuilder - hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
+
         // Show loading while checking onboarding status
         if (snapshot.connectionState == ConnectionState.waiting) {
           print('[RootWrapper] Waiting for onboarding check...');
@@ -76,7 +78,8 @@ class _RootWrapperState extends State<RootWrapper> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.warning_amber, size: 64, color: Colors.orange),
+                  const Icon(Icons.warning_amber,
+                      size: 64, color: Colors.orange),
                   const SizedBox(height: 16),
                   const Text(
                     'Error loading app',
@@ -104,7 +107,7 @@ class _RootWrapperState extends State<RootWrapper> {
             ),
           );
         }
-        
+
         final isCompleted = snapshot.data ?? false;
         print('[RootWrapper] Onboarding completed: $isCompleted');
 
@@ -121,4 +124,3 @@ class _RootWrapperState extends State<RootWrapper> {
     );
   }
 }
-

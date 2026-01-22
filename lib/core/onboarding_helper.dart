@@ -9,14 +9,14 @@ class OnboardingHelper {
     try {
       print('[OnboardingHelper] Starting SharedPreferences check...');
       // Add timeout to prevent hanging
-      final prefs = await SharedPreferences.getInstance()
-          .timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {
-              print('[OnboardingHelper] WARNING: SharedPreferences timeout');
-              throw TimeoutException('SharedPreferences timeout', const Duration(seconds: 5));
-            },
-          );
+      final prefs = await SharedPreferences.getInstance().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          print('[OnboardingHelper] WARNING: SharedPreferences timeout');
+          throw TimeoutException(
+              'SharedPreferences timeout', const Duration(seconds: 5));
+        },
+      );
       print('[OnboardingHelper] SharedPreferences instance obtained');
       final result = prefs.getBool(_onboardingCompletedKey) ?? false;
       print('[OnboardingHelper] Onboarding check completed: $result');
@@ -51,4 +51,3 @@ class OnboardingHelper {
     }
   }
 }
-

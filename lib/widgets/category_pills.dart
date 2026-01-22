@@ -48,9 +48,8 @@ class _CategoryPillsState extends State<CategoryPills> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFF1A73E8)
-                      : Colors.grey[200],
+                  color:
+                      isSelected ? const Color(0xFF1A73E8) : Colors.grey[200],
                   borderRadius: BorderRadius.circular(32),
                 ),
                 child: Center(
@@ -71,4 +70,3 @@ class _CategoryPillsState extends State<CategoryPills> {
     );
   }
 }
-

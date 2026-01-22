@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/meal_service.dart';
 
 /// Bottom sheet for adding a custom meal.
-/// 
+///
 /// Section 1: System meals (Breakfast, Lunch, Dinner)
 /// - Displayed as disabled (always exist, cannot be added)
-/// 
+///
 /// Section 2: Custom meal
 /// - TextField for meal name (required)
 /// - Creates meal with type = "custom"
@@ -23,13 +23,13 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
   bool _isLoading = false;
 
   /// Handle custom meal creation
-  /// 
+  ///
   /// Data safety: Validates meal name is non-empty before creating.
   Future<void> _createCustomMeal() async {
     if (_isLoading) return;
 
     final mealName = _customMealController.text.trim();
-    
+
     // Guard: Prevent creating meals without a name
     if (mealName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,11 +68,12 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
       if (mounted) {
         String errorMessage = 'Failed to create meal';
         if (e.toString().contains('system meal name')) {
-          errorMessage = 'This meal name is reserved. Please choose a different name.';
+          errorMessage =
+              'This meal name is reserved. Please choose a different name.';
         } else {
           errorMessage = e.toString();
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -156,7 +157,8 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
                     ),
                   ),
               ],
@@ -282,7 +284,8 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                               onTap: _isLoading ? null : _createCustomMeal,
                               borderRadius: BorderRadius.circular(16),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 alignment: Alignment.center,
                                 child: _isLoading
                                     ? const SizedBox(
@@ -290,7 +293,9 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                                         height: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2.5,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
                                         ),
                                       )
                                     : const Text(
