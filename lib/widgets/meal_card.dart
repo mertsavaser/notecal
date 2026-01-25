@@ -10,7 +10,8 @@ class MealCard extends StatelessWidget {
   final Function(Map<String, dynamic>) onFoodAction;
   final Function(String, String) onRename; // id, name
   final Function(String, String, int) onDelete; // id, name, count
-  final Function(String, List<Map<String, dynamic>>) onSaveTemplate; // name, foods
+  final Function(String, List<Map<String, dynamic>>)
+      onSaveTemplate; // name, foods
 
   const MealCard({
     super.key,
@@ -61,14 +62,15 @@ class MealCard extends StatelessWidget {
         if (snapshot.hasError) {
           return Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text('Error loading foods: ${snapshot.error}', style: const TextStyle(color: Colors.red)),
+            child: Text('Error loading foods: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red)),
           );
         }
 
-        // While loading, we might show a skeleton or nothing. 
-        // But since this is a stream, we want to keep showing old data if available? 
+        // While loading, we might show a skeleton or nothing.
+        // But since this is a stream, we want to keep showing old data if available?
         // StreamBuilder usually keeps data.
-        
+
         final foods = snapshot.data ?? [];
         final mealCalories = _calculateTotalCalories(foods);
         final mealProtein = _calculateTotalProtein(foods);
@@ -165,7 +167,8 @@ class MealCard extends StatelessWidget {
                               children: [
                                 Icon(Icons.delete, size: 18, color: Colors.red),
                                 SizedBox(width: 8),
-                                Text('Delete', style: TextStyle(color: Colors.red)),
+                                Text('Delete',
+                                    style: TextStyle(color: Colors.red)),
                               ],
                             ),
                           ),

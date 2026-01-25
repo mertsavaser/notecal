@@ -206,7 +206,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           controller: _confirmPasswordController,
                           obscureText: true,
                           prefixIcon: const Icon(Icons.lock_outlined),
-                          validator: (value) => _validateConfirmPassword(value, t),
+                          validator: (value) =>
+                              _validateConfirmPassword(value, t),
                         ),
                         const SizedBox(height: 32),
                         _isLoading

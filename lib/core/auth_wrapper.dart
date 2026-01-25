@@ -86,7 +86,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
                       final t = AppLocalizations.of(context);
                       return Text(
                         t?.authenticationError ?? 'Authentication Error',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       );
                     },
                   ),

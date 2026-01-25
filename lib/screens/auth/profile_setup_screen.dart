@@ -26,7 +26,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _ageController = TextEditingController();
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
-  
+
   // Manual targets controllers
   final _caloriesController = TextEditingController();
   final _proteinController = TextEditingController();
@@ -37,26 +37,26 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   String? _selectedActivityLevel;
   UserGoal _selectedGoal = UserGoal.maintain;
   TargetsMode _targetsMode = TargetsMode.auto;
-  
+
   bool _isLoading = false;
 
   List<String> _getGenderOptions(AppLocalizations t) => [t.male, t.female];
 
   Map<String, double> _getActivityFactors(AppLocalizations t) => {
-    t.sedentary: 1.2,
-    t.lightlyActive: 1.375,
-    t.moderatelyActive: 1.55,
-    t.veryActive: 1.725,
-    t.athlete: 1.9,
-  };
+        t.sedentary: 1.2,
+        t.lightlyActive: 1.375,
+        t.moderatelyActive: 1.55,
+        t.veryActive: 1.725,
+        t.athlete: 1.9,
+      };
 
   Map<String, String> _getActivityLevelKeys(AppLocalizations t) => {
-    t.sedentary: 'sedentary',
-    t.lightlyActive: 'lightly_active',
-    t.moderatelyActive: 'moderately_active',
-    t.veryActive: 'very_active',
-    t.athlete: 'athlete',
-  };
+        t.sedentary: 'sedentary',
+        t.lightlyActive: 'lightly_active',
+        t.moderatelyActive: 'moderately_active',
+        t.veryActive: 'very_active',
+        t.athlete: 'athlete',
+      };
 
   @override
   void dispose() {
@@ -150,7 +150,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       final t = AppLocalizations.of(context)!;
       final gender = _selectedGender?.toLowerCase() ?? 'male';
       final activityLevelKeys = _getActivityLevelKeys(t);
-      final activityLevel = activityLevelKeys[_selectedActivityLevel] ?? 'sedentary';
+      final activityLevel =
+          activityLevelKeys[_selectedActivityLevel] ?? 'sedentary';
 
       // Construct manual targets if manual mode
       MacroTargets? manualTargets;
@@ -178,7 +179,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       // Create a UserProfile object to use the TargetCalculator logic easily?
       // Actually, we can just use FirestoreHelper directly.
       // But we need to use the new method or the updated one.
-      
+
       await FirestoreHelper.updateUserProfile(
         user.uid,
         username: '$firstName $lastName'.trim(), // Legacy field
@@ -192,12 +193,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         manualTargets: manualTargets,
         tdee: tdee,
       );
-      
+
       // Also save first/last name as they are required for "complete" check
       // FirestoreHelper.updateUserProfile doesn't save firstName/lastName separately in the legacy method
       // so we might need to do a manual merge or update FirestoreHelper.
       // Ideally we use saveUserProfile with a UserProfile object.
-      
+
       final profile = UserProfile(
         uid: user.uid,
         email: user.email ?? '',
@@ -215,7 +216,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         tdee: tdee,
         profileCompleted: true,
       );
-      
+
       await FirestoreHelper.saveUserProfile(profile);
 
       if (mounted) {
@@ -392,8 +393,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color:
+                            isSelected ? Colors.white : const Color(0xFF6B7280),
                       ),
                     ),
                   ),
@@ -410,14 +413,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     // Calculate preview targets
     // We create a temporary profile to use the calculator
     MacroTargets previewTargets;
-    
+
     // Default values if inputs are empty
     final age = int.tryParse(_ageController.text) ?? 25;
     final height = double.tryParse(_heightController.text) ?? 170;
     final weight = double.tryParse(_weightController.text) ?? 70;
     final gender = _selectedGender?.toLowerCase() ?? 'male';
     final activityLevel = _selectedActivityLevel ?? 'sedentary';
-    
+
     // Map display activity to key
     final t = AppLocalizations.of(context)!;
     final activityKeys = _getActivityLevelKeys(t);
@@ -433,12 +436,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       activityLevel: activityKey,
       goal: _selectedGoal,
       targetsMode: _targetsMode,
-      manualTargets: _targetsMode == TargetsMode.manual ? MacroTargets(
-        calories: int.tryParse(_caloriesController.text) ?? 0,
-        protein: int.tryParse(_proteinController.text) ?? 0,
-        carbs: int.tryParse(_carbsController.text) ?? 0,
-        fat: int.tryParse(_fatController.text) ?? 0,
-      ) : null,
+      manualTargets: _targetsMode == TargetsMode.manual
+          ? MacroTargets(
+              calories: int.tryParse(_caloriesController.text) ?? 0,
+              protein: int.tryParse(_proteinController.text) ?? 0,
+              carbs: int.tryParse(_carbsController.text) ?? 0,
+              fat: int.tryParse(_fatController.text) ?? 0,
+            )
+          : null,
     );
 
     previewTargets = TargetCalculator.calculateTargets(tempProfile);
@@ -488,8 +493,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Daily Calories', style: TextStyle(fontWeight: FontWeight.w600)),
-                    Text('${previewTargets.calories} kcal', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue)),
+                    const Text('Daily Calories',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text('${previewTargets.calories} kcal',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.blue)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -561,7 +571,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.black : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? Colors.black : Colors.grey[300]!),
+          border:
+              Border.all(color: isSelected ? Colors.black : Colors.grey[300]!),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -589,7 +600,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Widget _buildMiniMacro(String label, String value) {
     return Column(
       children: [
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
     );
@@ -638,7 +650,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    
+
     // Initialize gender and activity level on first build
     if (_selectedGender == null) {
       _selectedGender = t.male;
@@ -646,7 +658,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     if (_selectedActivityLevel == null) {
       _selectedActivityLevel = t.sedentary;
     }
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(

@@ -146,10 +146,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await FirestoreHelper.deleteUserData(user.uid);
         // Then delete Auth user
         await user.delete();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text(t.accountDeleted)),
+            SnackBar(content: Text(t.accountDeleted)),
           );
         }
         // Navigation handled by AuthWrapper (user becomes null)
@@ -182,7 +182,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final t = AppLocalizations.of(context)!;
 
     if (_isLoadingProfile) {
-      return const Center(child: CircularProgressIndicator(color: Colors.black));
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.black));
     }
 
     if (_userProfile == null) {
@@ -317,7 +318,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -465,7 +467,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            _getActivityLevelDisplayName(_userProfile?.activityLevel ?? 'sedentary'),
+            _getActivityLevelDisplayName(
+                _userProfile?.activityLevel ?? 'sedentary'),
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[700],
@@ -477,8 +480,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMacroItem(
-      String label, String value, String unit, Color color) {
+  Widget _buildMacroItem(String label, String value, String unit, Color color) {
     return Column(
       children: [
         Text(

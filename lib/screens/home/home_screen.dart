@@ -89,8 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // --- Dialog Methods (extracted/refactored) ---
 
-  void _showRenameMealDialog(
-      String mealId, String currentName) {
+  void _showRenameMealDialog(String mealId, String currentName) {
     final controller = TextEditingController(text: currentName);
 
     showDialog(
@@ -137,8 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showDeleteMealDialog(
-      String mealId, String mealName, int foodCount) {
+  void _showDeleteMealDialog(String mealId, String mealName, int foodCount) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -233,8 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showFoodActionBottomSheet(
-      Map<String, dynamic> food, String mealId) {
+  void _showFoodActionBottomSheet(Map<String, dynamic> food, String mealId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -334,7 +331,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -365,18 +363,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Fallback to day meals stream if needed to calc summary manually?
                     // Actually, if we use getDailySummaryStream, it reads from the 'day' doc.
                     // This relies on _updateDailySummary working correctly.
-                    
+
                     double totalCalories = 0.0;
                     double totalProtein = 0.0;
                     double totalCarbs = 0.0;
                     double totalFat = 0.0;
 
-                    if (summarySnapshot.hasData && summarySnapshot.data != null) {
+                    if (summarySnapshot.hasData &&
+                        summarySnapshot.data != null) {
                       final summary = summarySnapshot.data!;
-                      totalCalories = (summary['totalCalories'] as num?)?.toDouble() ?? 0.0;
-                      totalProtein = (summary['totalProtein'] as num?)?.toDouble() ?? 0.0;
-                      totalCarbs = (summary['totalCarbs'] as num?)?.toDouble() ?? 0.0;
-                      totalFat = (summary['totalFat'] as num?)?.toDouble() ?? 0.0;
+                      totalCalories =
+                          (summary['totalCalories'] as num?)?.toDouble() ?? 0.0;
+                      totalProtein =
+                          (summary['totalProtein'] as num?)?.toDouble() ?? 0.0;
+                      totalCarbs =
+                          (summary['totalCarbs'] as num?)?.toDouble() ?? 0.0;
+                      totalFat =
+                          (summary['totalFat'] as num?)?.toDouble() ?? 0.0;
                     }
 
                     return _buildDailySummaryCard(
@@ -436,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: meals.map((meal) {
                         final mealId = meal['id'] as String;
                         final mealName = meal['name'] as String? ?? 'Unnamed';
-                        
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 24.0),
                           child: MealCard(
@@ -445,7 +448,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             date: _todayDate,
                             mealService: _mealService,
                             onAddFood: () => _showAddFoodDialog(mealId),
-                            onFoodAction: (food) => _showFoodActionBottomSheet(food, mealId),
+                            onFoodAction: (food) =>
+                                _showFoodActionBottomSheet(food, mealId),
                             onRename: _showRenameMealDialog,
                             onDelete: _showDeleteMealDialog,
                             onSaveTemplate: _showSaveMealDialog,
@@ -497,7 +501,8 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 72,
               fontWeight: FontWeight.w500,
               height: 1.0,
-              color: remainingCalories < 0 ? Colors.red : const Color(0xFF1A1A1A),
+              color:
+                  remainingCalories < 0 ? Colors.red : const Color(0xFF1A1A1A),
               letterSpacing: -3,
             ),
           ),
@@ -528,7 +533,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSecondaryStat(String label, int value) {
     return Column(
       children: [
-        Text('$value', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
+        Text('$value',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
         Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
       ],
     );

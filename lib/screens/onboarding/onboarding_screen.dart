@@ -79,7 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
     }
     final pages = _getPages(t);
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(

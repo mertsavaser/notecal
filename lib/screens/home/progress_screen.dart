@@ -94,7 +94,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 !snapshot.hasData) {
               // FIX: Constrain height to prevent infinite size error
               return Container(
-                height: 200, 
+                height: 200,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -367,9 +367,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                                 children: [
                                                   Builder(
                                                     builder: (context) {
-                                                      final t = AppLocalizations.of(context)!;
+                                                      final t =
+                                                          AppLocalizations.of(
+                                                              context)!;
                                                       return Text(
-                                                        _formatDateDisplay(date, t),
+                                                        _formatDateDisplay(
+                                                            date, t),
                                                         style: TextStyle(
                                                           fontSize: 16,
                                                           fontWeight:
@@ -385,48 +388,58 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                                     },
                                                   ),
                                                   if (isToday) ...[
-                                                  const SizedBox(width: 8),
-                                                  Builder(
-                                                    builder: (context) {
-                                                      final t = AppLocalizations.of(context)!;
-                                                      return Container(
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
-                                                          horizontal: 8,
-                                                          vertical: 3,
-                                                        ),
-                                                        decoration: BoxDecoration(
-                                                          color: const Color(
-                                                                    0xFF4A90E2)
-                                                              .withValues(
-                                                                  alpha: 0.08),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                        ),
-                                                        child: Text(
-                                                          t.today,
-                                                          style: TextStyle(
-                                                            fontSize: 11,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: const Color(
-                                                                      0xFF4A90E2)
-                                                                .withValues(
-                                                                    alpha: 0.8),
-                                                            letterSpacing: 0.2,
+                                                    const SizedBox(width: 8),
+                                                    Builder(
+                                                      builder: (context) {
+                                                        final t =
+                                                            AppLocalizations.of(
+                                                                context)!;
+                                                        return Container(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 3,
                                                           ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: const Color(
+                                                                    0xFF4A90E2)
+                                                                .withValues(
+                                                                    alpha:
+                                                                        0.08),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                          ),
+                                                          child: Text(
+                                                            t.today,
+                                                            style: TextStyle(
+                                                              fontSize: 11,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                              color: const Color(
+                                                                      0xFF4A90E2)
+                                                                  .withValues(
+                                                                      alpha:
+                                                                          0.8),
+                                                              letterSpacing:
+                                                                  0.2,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
                                                   ],
                                                 ],
                                               ),
                                               const SizedBox(height: 8),
                                               Builder(
                                                 builder: (context) {
-                                                  final t = AppLocalizations.of(context)!;
+                                                  final t = AppLocalizations.of(
+                                                      context)!;
                                                   return Text(
                                                     calories > 0
                                                         ? '${calories.round()} ${t.cal}'
@@ -436,7 +449,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                                       color: calories > 0
                                                           ? Colors.grey[700]
                                                           : Colors.grey[500],
-                                                      fontWeight: FontWeight.w400,
+                                                      fontWeight:
+                                                          FontWeight.w400,
                                                     ),
                                                   );
                                                 },
@@ -661,134 +675,143 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                     final meal = meals[index];
                     final mealId = meal['id'] as String;
                     final mealName = meal['name'] as String? ?? 'Unknown';
-                    
+
                     // FIX: Listen to foods stream for each meal to get real data
                     return StreamBuilder<List<Map<String, dynamic>>>(
-                      stream: mealService.getMealFoodsStream(date, mealId),
-                      builder: (context, foodSnapshot) {
-                        final foods = foodSnapshot.data ?? [];
-                        
-                        // Calculate totals from foods
-                        double mealCalories = 0.0;
-                        for (final food in foods) {
-                          mealCalories += ((food['calories'] as num?)?.toDouble() ?? 0.0);
-                        }
+                        stream: mealService.getMealFoodsStream(date, mealId),
+                        builder: (context, foodSnapshot) {
+                          final foods = foodSnapshot.data ?? [];
 
-                        final hasNoCalories = mealCalories == 0.0;
+                          // Calculate totals from foods
+                          double mealCalories = 0.0;
+                          for (final food in foods) {
+                            mealCalories +=
+                                ((food['calories'] as num?)?.toDouble() ?? 0.0);
+                          }
 
-                        return Opacity(
-                          opacity: hasNoCalories ? 0.5 : 1.0,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: Container(
-                              padding: const EdgeInsets.all(20.0),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        mealName,
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w500,
-                                          color: const Color(0xFF1A1A1A).withValues(
-                                              alpha: hasNoCalories ? 0.6 : 1.0),
-                                          letterSpacing: -0.2,
+                          final hasNoCalories = mealCalories == 0.0;
+
+                          return Opacity(
+                            opacity: hasNoCalories ? 0.5 : 1.0,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: Container(
+                                padding: const EdgeInsets.all(20.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          mealName,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                            color: const Color(0xFF1A1A1A)
+                                                .withValues(
+                                                    alpha: hasNoCalories
+                                                        ? 0.6
+                                                        : 1.0),
+                                            letterSpacing: -0.2,
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        '${mealCalories.round()}',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w500,
-                                          color: (Colors.grey[700] ?? Colors.grey)
-                                              .withValues(
-                                                  alpha: hasNoCalories ? 0.5 : 1.0),
+                                        Text(
+                                          '${mealCalories.round()}',
+                                          style: TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w500,
+                                            color: (Colors.grey[700] ??
+                                                    Colors.grey)
+                                                .withValues(
+                                                    alpha: hasNoCalories
+                                                        ? 0.5
+                                                        : 1.0),
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        ' cal',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w400,
-                                          color: (Colors.grey[600] ?? Colors.grey)
-                                              .withValues(
-                                                  alpha: hasNoCalories ? 0.5 : 1.0),
+                                        Text(
+                                          ' cal',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                            color: (Colors.grey[600] ??
+                                                    Colors.grey)
+                                                .withValues(
+                                                    alpha: hasNoCalories
+                                                        ? 0.5
+                                                        : 1.0),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (foods.isNotEmpty) ...[
-                                    const SizedBox(height: 16),
-                                    ...foods.map((food) {
-                                      return Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 10.0),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                food['name'] ?? 'Unknown',
+                                      ],
+                                    ),
+                                    if (foods.isNotEmpty) ...[
+                                      const SizedBox(height: 16),
+                                      ...foods.map((food) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 10.0),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  food['name'] ?? 'Unknown',
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    color: (Colors.grey[700] ??
+                                                            Colors.grey)
+                                                        .withValues(
+                                                            alpha: hasNoCalories
+                                                                ? 0.5
+                                                                : 0.8),
+                                                    fontWeight: FontWeight.w400,
+                                                    height: 1.4,
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                '${((food['calories'] as num?)?.toDouble() ?? 0.0).round()}',
                                                 style: TextStyle(
                                                   fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
                                                   color: (Colors.grey[700] ??
                                                           Colors.grey)
                                                       .withValues(
                                                           alpha: hasNoCalories
-                                                              ? 0.5
-                                                              : 0.8),
-                                                  fontWeight: FontWeight.w400,
-                                                  height: 1.4,
+                                                              ? 0.4
+                                                              : 0.7),
                                                 ),
                                               ),
-                                            ),
-                                            Text(
-                                              '${((food['calories'] as num?)?.toDouble() ?? 0.0).round()}',
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                                color: (Colors.grey[700] ??
-                                                        Colors.grey)
-                                                    .withValues(
-                                                        alpha: hasNoCalories
-                                                            ? 0.4
-                                                            : 0.7),
+                                              Text(
+                                                ' cal',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w400,
+                                                  color: (Colors.grey[600] ??
+                                                          Colors.grey)
+                                                      .withValues(
+                                                          alpha: hasNoCalories
+                                                              ? 0.4
+                                                              : 0.6),
+                                                ),
                                               ),
-                                            ),
-                                            Text(
-                                              ' cal',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w400,
-                                                color: (Colors.grey[600] ??
-                                                        Colors.grey)
-                                                    .withValues(
-                                                        alpha: hasNoCalories
-                                                            ? 0.4
-                                                            : 0.6),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      }
-                    );
+                          );
+                        });
                   },
                 );
               },

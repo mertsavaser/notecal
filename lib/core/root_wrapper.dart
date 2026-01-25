@@ -89,12 +89,14 @@ class _RootWrapperState extends State<RootWrapper> {
                         children: [
                           Text(
                             t?.errorLoadingApp ?? 'Error loading app',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             snapshot.error.toString(),
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 24),

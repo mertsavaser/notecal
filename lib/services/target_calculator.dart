@@ -34,16 +34,17 @@ class TargetCalculator {
   /// Calculate targets based on profile settings (Goal + Mode)
   static MacroTargets calculateTargets(UserProfile profile) {
     // 1. If manual mode, return manual targets (or defaults if missing)
-    if (profile.targetsMode == TargetsMode.manual && profile.manualTargets != null) {
+    if (profile.targetsMode == TargetsMode.manual &&
+        profile.manualTargets != null) {
       return profile.manualTargets!;
     }
 
     // 2. If auto mode, calculate based on TDEE and Goal
     // Ensure we have necessary data
-    if (profile.weight == null || 
-        profile.height == null || 
-        profile.age == null || 
-        profile.gender == null || 
+    if (profile.weight == null ||
+        profile.height == null ||
+        profile.age == null ||
+        profile.gender == null ||
         profile.activityLevel == null) {
       // Return safe defaults if profile is incomplete
       return const MacroTargets(
@@ -69,7 +70,8 @@ class TargetCalculator {
       case UserGoal.lose:
         targetCalories = tdee - 400;
         // Safety cap: Min 1200 for females, 1500 for males
-        final minCals = profile.gender!.toLowerCase() == 'male' ? 1500.0 : 1200.0;
+        final minCals =
+            profile.gender!.toLowerCase() == 'male' ? 1500.0 : 1200.0;
         if (targetCalories < minCals) targetCalories = minCals;
         break;
       case UserGoal.gain:
@@ -87,7 +89,7 @@ class TargetCalculator {
     // Protein: 4 cal/g
     // Carbs: 4 cal/g
     // Fat: 9 cal/g
-    
+
     final proteinCals = caloriesInt * 0.30;
     final carbsCals = caloriesInt * 0.40;
     final fatCals = caloriesInt * 0.30;

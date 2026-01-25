@@ -22,7 +22,7 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
   final MealService _mealService = MealService();
   final TextEditingController _customMealController = TextEditingController();
   bool _isLoading = false;
-  
+
   // Track which system meals are currently missing from the day's view
   // This would ideally be passed in, but we can fetch it or just allow "restoring" blindly
   // For better UX, let's fetch current meals to know what to show as "addable"
@@ -116,7 +116,7 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
   Future<void> _restoreSystemMeal(String mealName) async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
-    
+
     try {
       final today = _mealService.getTodayDate();
       await _mealService.restoreSystemMeal(today, mealName);
@@ -233,24 +233,31 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                   ...MealService.systemMealNames.map((mealName) {
                     // Map system meal names to localized strings
                     String displayName = mealName;
-                    if (mealName == 'Breakfast') displayName = t.breakfast;
-                    else if (mealName == 'Lunch') displayName = t.lunch;
+                    if (mealName == 'Breakfast')
+                      displayName = t.breakfast;
+                    else if (mealName == 'Lunch')
+                      displayName = t.lunch;
                     else if (mealName == 'Dinner') displayName = t.dinner;
-                    
+
                     final isPresent = _existingMealNames.contains(mealName);
-                    
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: InkWell(
-                        onTap: isPresent ? null : () => _restoreSystemMeal(mealName),
+                        onTap: isPresent
+                            ? null
+                            : () => _restoreSystemMeal(mealName),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 8),
                           child: Row(
                             children: [
                               Icon(
                                 _getMealIcon(mealName, t),
-                                color: isPresent ? Colors.grey[300] : const Color(0xFF4A90E2),
+                                color: isPresent
+                                    ? Colors.grey[300]
+                                    : const Color(0xFF4A90E2),
                                 size: 22,
                               ),
                               const SizedBox(width: 16),
@@ -260,7 +267,9 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
-                                    color: isPresent ? Colors.grey[400] : const Color(0xFF1A1A1A),
+                                    color: isPresent
+                                        ? Colors.grey[400]
+                                        : const Color(0xFF1A1A1A),
                                   ),
                                 ),
                               ),

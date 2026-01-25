@@ -56,7 +56,7 @@ class FirestoreFoodService {
         final capitalized = lowerQuery.length > 0
             ? '${lowerQuery[0].toUpperCase()}${lowerQuery.substring(1)}'
             : lowerQuery;
-            
+
         querySnapshot = await _firestore
             .collection('foods')
             .orderBy('name')

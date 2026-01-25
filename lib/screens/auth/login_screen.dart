@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loginWithEmail() async {
     final t = AppLocalizations.of(context)!;
-    
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -119,14 +119,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<User?> _loginWithGoogle() async {
     if (_isLoading) return null; // Prevent multiple simultaneous sign-ins
-    
+
     if (!mounted) return null;
-    
+
     // Update UI state first to show loading indicator
     setState(() {
       _isLoading = true;
     });
-    
+
     // Allow UI to update before starting async operation
     await Future.delayed(const Duration(milliseconds: 100));
 
@@ -155,8 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Google Sign-In failed: user is null after sign-in');
       }
 
-      print(
-          '[LoginScreen] Google Sign-In succeeded for UID: ${user.uid}');
+      print('[LoginScreen] Google Sign-In succeeded for UID: ${user.uid}');
 
       // Check if this is a new user and create base Firestore document
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
@@ -305,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
       print('[Apple Sign-In] Authentication complete');
     } catch (e) {
       print('[Apple Sign-In] Error: ${e.toString()}');
-      
+
       if (!mounted) return;
 
       final t = AppLocalizations.of(context)!;
@@ -414,9 +413,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 GoogleAuthButton(
-                  onPressed: _isLoading ? null : () {
-                    _loginWithGoogle(); // Fire and forget - Future is handled internally
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          _loginWithGoogle(); // Fire and forget - Future is handled internally
+                        },
                 ),
                 const SizedBox(height: 16),
                 AppleAuthButton(

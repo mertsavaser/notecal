@@ -62,7 +62,7 @@ class MealService {
     try {
       for (final mealName in systemMealNames) {
         final mealId = systemMealIds[mealName]!;
-        // Use set with merge: true to avoid read costs. 
+        // Use set with merge: true to avoid read costs.
         // This ensures the meal exists without waiting for a read.
         await _mealDocRef(date, mealId).set({
           'name': mealName,
@@ -82,13 +82,13 @@ class MealService {
     try {
       final mealId = systemMealIds[mealName];
       if (mealId == null) return false;
-      
+
       await _mealDocRef(date, mealId).set({
         'name': mealName,
         'type': 'system',
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      
+
       await _updateDailySummary(date);
       return true;
     } catch (e) {
@@ -167,8 +167,9 @@ class MealService {
     try {
       // Optimization: Ensure system meals exist with a blind write
       if (systemMealIds.containsValue(mealId)) {
-         await _mealDocRef(date, mealId).set({
-          'name': systemMealIds.entries.firstWhere((e) => e.value == mealId).key,
+        await _mealDocRef(date, mealId).set({
+          'name':
+              systemMealIds.entries.firstWhere((e) => e.value == mealId).key,
           'type': 'system',
           'createdAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -208,7 +209,8 @@ class MealService {
   }
 
   /// Get stream of foods for a specific meal
-  Stream<List<Map<String, dynamic>>> getMealFoodsStream(String date, String mealId) {
+  Stream<List<Map<String, dynamic>>> getMealFoodsStream(
+      String date, String mealId) {
     try {
       return _foodsCollectionRef(date, mealId)
           .orderBy('createdAt', descending: false)
@@ -239,9 +241,7 @@ class MealService {
   /// NOTE: This does NOT fetch foods anymore to save reads and complexity.
   /// Foods should be fetched by the individual MealCard using getMealFoodsStream.
   Stream<List<Map<String, dynamic>>> getDayMealsStream(String date) {
-    return _mealsCollectionRef(date)
-        .snapshots()
-        .map((mealsSnapshot) {
+    return _mealsCollectionRef(date).snapshots().map((mealsSnapshot) {
       try {
         final List<Map<String, dynamic>> systemMeals = [];
         final List<Map<String, dynamic>> customMeals = [];
@@ -262,7 +262,7 @@ class MealService {
             if (mealName.isEmpty) continue;
           }
 
-          // We do NOT fetch foods here. 
+          // We do NOT fetch foods here.
           // MealCard will listen to foods subcollection.
           final meal = {
             'id': mealId,
@@ -316,7 +316,8 @@ class MealService {
 
       final foodData = foodDoc.data() as Map<String, dynamic>;
       final originalAmount = (foodData['amount'] as num?)?.toDouble() ?? 100.0;
-      final originalCalories = (foodData['calories'] as num?)?.toDouble() ?? 0.0;
+      final originalCalories =
+          (foodData['calories'] as num?)?.toDouble() ?? 0.0;
       final originalProtein = (foodData['protein'] as num?)?.toDouble() ?? 0.0;
       final originalCarbs = (foodData['carbs'] as num?)?.toDouble() ?? 0.0;
       final originalFat = (foodData['fat'] as num?)?.toDouble() ?? 0.0;
@@ -442,7 +443,8 @@ class MealService {
     return dates;
   }
 
-  Future<Map<String, Map<String, dynamic>?>> getWeeklySummaries(List<String> dates) async {
+  Future<Map<String, Map<String, dynamic>?>> getWeeklySummaries(
+      List<String> dates) async {
     final Map<String, Map<String, dynamic>?> summaries = {};
     for (final date in dates) {
       summaries[date] = await getDailySummary(date);
@@ -460,7 +462,8 @@ class MealService {
     try {
       final parts = dateString.split('-');
       if (parts.length != 3) return null;
-      return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+      return DateTime(
+          int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
     } catch (e) {
       return null;
     }
@@ -468,8 +471,12 @@ class MealService {
 
   Future<void> addRecentFood(Map<String, dynamic> food) async {
     try {
-      final recentRef = _firestore.collection('users').doc(_userId).collection('recent_foods');
-      final querySnapshot = await recentRef.where('name', isEqualTo: food['name']).limit(1).get();
+      final recentRef = _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('recent_foods');
+      final querySnapshot =
+          await recentRef.where('name', isEqualTo: food['name']).limit(1).get();
 
       if (querySnapshot.docs.isNotEmpty) {
         await querySnapshot.docs.first.reference.update({
@@ -489,7 +496,13 @@ class MealService {
 
   Future<List<Map<String, dynamic>>> getRecentFoods() async {
     try {
-      final snapshot = await _firestore.collection('users').doc(_userId).collection('recent_foods').orderBy('lastUsedAt', descending: true).limit(10).get();
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('recent_foods')
+          .orderBy('lastUsedAt', descending: true)
+          .limit(10)
+          .get();
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return {
@@ -509,8 +522,9 @@ class MealService {
   }
 
   // Saved Meals Operations
-  
-  Future<String?> createSavedMeal(String name, List<Map<String, dynamic>> foods) async {
+
+  Future<String?> createSavedMeal(
+      String name, List<Map<String, dynamic>> foods) async {
     try {
       final cleanFoods = foods.map((f) {
         final cf = Map<String, dynamic>.from(f);
@@ -519,7 +533,11 @@ class MealService {
         return cf;
       }).toList();
 
-      final docRef = await _firestore.collection('users').doc(_userId).collection('saved_meals').add({
+      final docRef = await _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('saved_meals')
+          .add({
         'name': name,
         'foods': cleanFoods,
         'createdAt': FieldValue.serverTimestamp(),
@@ -533,7 +551,12 @@ class MealService {
 
   Future<void> updateSavedMealName(String id, String newName) async {
     try {
-      await _firestore.collection('users').doc(_userId).collection('saved_meals').doc(id).update({'name': newName});
+      await _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('saved_meals')
+          .doc(id)
+          .update({'name': newName});
     } catch (e) {
       AppLogger.e('MealService', 'Error updating saved meal', e);
     }
@@ -541,16 +564,20 @@ class MealService {
 
   Future<void> addFoodToSavedMeal(String id, Map<String, dynamic> food) async {
     try {
-      final docRef = _firestore.collection('users').doc(_userId).collection('saved_meals').doc(id);
+      final docRef = _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('saved_meals')
+          .doc(id);
       final doc = await docRef.get();
       if (!doc.exists) return;
-      
+
       final foods = List<Map<String, dynamic>>.from(doc.data()?['foods'] ?? []);
-      
+
       final cleanFood = Map<String, dynamic>.from(food);
       cleanFood.remove('id');
       cleanFood.remove('createdAt');
-      
+
       foods.add(cleanFood);
       await docRef.update({'foods': foods});
     } catch (e) {
@@ -560,10 +587,14 @@ class MealService {
 
   Future<void> deleteFoodFromSavedMeal(String id, int index) async {
     try {
-      final docRef = _firestore.collection('users').doc(_userId).collection('saved_meals').doc(id);
+      final docRef = _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('saved_meals')
+          .doc(id);
       final doc = await docRef.get();
       if (!doc.exists) return;
-      
+
       final foods = List<Map<String, dynamic>>.from(doc.data()?['foods'] ?? []);
       if (index >= 0 && index < foods.length) {
         foods.removeAt(index);
@@ -575,30 +606,43 @@ class MealService {
   }
 
   Stream<List<Map<String, dynamic>>> getSavedMealsStream() {
-    return _firestore.collection('users').doc(_userId).collection('saved_meals').orderBy('createdAt', descending: true).snapshots().map((snapshot) => snapshot.docs.map((doc) {
-          final data = doc.data();
-          return {
-            'id': doc.id,
-            'name': data['name'] ?? 'Unnamed Meal',
-            'foods': (data['foods'] as List<dynamic>?)?.map((f) {
-              final fMap = f as Map<String, dynamic>;
+    return _firestore
+        .collection('users')
+        .doc(_userId)
+        .collection('saved_meals')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
               return {
-                'name': fMap['name'] ?? '',
-                'calories': (fMap['calories'] as num?)?.toDouble() ?? 0.0,
-                'amount': (fMap['amount'] as num?)?.toDouble() ?? 0.0,
-                'unit': fMap['unit'] ?? 'g',
-                'protein': (fMap['protein'] as num?)?.toDouble() ?? 0.0,
-                'carbs': (fMap['carbs'] as num?)?.toDouble() ?? 0.0,
-                'fat': (fMap['fat'] as num?)?.toDouble() ?? 0.0,
+                'id': doc.id,
+                'name': data['name'] ?? 'Unnamed Meal',
+                'foods': (data['foods'] as List<dynamic>?)?.map((f) {
+                      final fMap = f as Map<String, dynamic>;
+                      return {
+                        'name': fMap['name'] ?? '',
+                        'calories':
+                            (fMap['calories'] as num?)?.toDouble() ?? 0.0,
+                        'amount': (fMap['amount'] as num?)?.toDouble() ?? 0.0,
+                        'unit': fMap['unit'] ?? 'g',
+                        'protein': (fMap['protein'] as num?)?.toDouble() ?? 0.0,
+                        'carbs': (fMap['carbs'] as num?)?.toDouble() ?? 0.0,
+                        'fat': (fMap['fat'] as num?)?.toDouble() ?? 0.0,
+                      };
+                    }).toList() ??
+                    [],
               };
-            }).toList() ?? [],
-          };
-        }).toList());
+            }).toList());
   }
 
   Future<void> deleteSavedMeal(String id) async {
     try {
-      await _firestore.collection('users').doc(_userId).collection('saved_meals').doc(id).delete();
+      await _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('saved_meals')
+          .doc(id)
+          .delete();
     } catch (e) {
       AppLogger.e('MealService', 'Error deleting saved meal', e);
     }

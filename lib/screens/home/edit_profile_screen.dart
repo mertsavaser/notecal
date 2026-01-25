@@ -18,7 +18,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
   final _ageController = TextEditingController();
-  
+
   // Manual targets controllers
   final _caloriesController = TextEditingController();
   final _proteinController = TextEditingController();
@@ -29,7 +29,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _selectedActivityLevel = 'Sedentary (little or no exercise)';
   UserGoal _selectedGoal = UserGoal.maintain;
   TargetsMode _targetsMode = TargetsMode.auto;
-  
+
   bool _isSaving = false;
   bool _isLoadingProfile = true;
 
@@ -74,21 +74,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _weightController.text = (profile.weight ?? '').toString();
           _heightController.text = (profile.height ?? '').toString();
           _ageController.text = (profile.age ?? '').toString();
-          
+
           final genderStr = profile.gender ?? 'male';
           _selectedGender = genderStr.isEmpty
               ? 'Male'
               : '${genderStr[0].toUpperCase()}${genderStr.substring(1).toLowerCase()}';
-          
+
           _selectedActivityLevel = _getActivityLevelDisplayName(
             profile.activityLevel ?? 'sedentary',
           );
-          
+
           _selectedGoal = profile.goal;
           _targetsMode = profile.targetsMode;
-          
+
           if (profile.manualTargets != null) {
-            _caloriesController.text = profile.manualTargets!.calories.toString();
+            _caloriesController.text =
+                profile.manualTargets!.calories.toString();
             _proteinController.text = profile.manualTargets!.protein.toString();
             _carbsController.text = profile.manualTargets!.carbs.toString();
             _fatController.text = profile.manualTargets!.fat.toString();
@@ -99,7 +100,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _carbsController.text = '200';
             _fatController.text = '65';
           }
-          
+
           _isLoadingProfile = false;
         });
       } else {
@@ -282,7 +283,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: _weightController,
                   label: 'Weight (kg)',
                   validator: _validateWeight,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.monitor_weight_outlined,
                 ),
                 const SizedBox(height: 20),
@@ -290,7 +292,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: _heightController,
                   label: 'Height (cm)',
                   validator: _validateHeight,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.height_outlined,
                 ),
                 const SizedBox(height: 20),
@@ -309,7 +312,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 20),
                 _buildActivityLevelDropdown(),
                 const SizedBox(height: 32),
-                
+
                 _buildSectionTitle('Goal & Targets'),
                 const SizedBox(height: 20),
                 _buildGoalSelector(),
@@ -335,7 +338,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : const Text(
@@ -383,7 +387,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[600]),
-        prefixIcon: icon != null ? Icon(icon, color: Colors.grey[500], size: 22) : null,
+        prefixIcon:
+            icon != null ? Icon(icon, color: Colors.grey[500], size: 22) : null,
         filled: true,
         fillColor: Colors.grey[50],
         border: OutlineInputBorder(
@@ -514,7 +519,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final height = double.tryParse(_heightController.text) ?? 170;
     final weight = double.tryParse(_weightController.text) ?? 70;
     final gender = _selectedGender.toLowerCase();
-    final activityLevel = _activityLevelKeys[_selectedActivityLevel] ?? 'sedentary';
+    final activityLevel =
+        _activityLevelKeys[_selectedActivityLevel] ?? 'sedentary';
 
     final tempProfile = UserProfile(
       uid: 'temp',
@@ -526,12 +532,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       activityLevel: activityLevel,
       goal: _selectedGoal,
       targetsMode: _targetsMode,
-      manualTargets: _targetsMode == TargetsMode.manual ? MacroTargets(
-        calories: int.tryParse(_caloriesController.text) ?? 0,
-        protein: int.tryParse(_proteinController.text) ?? 0,
-        carbs: int.tryParse(_carbsController.text) ?? 0,
-        fat: int.tryParse(_fatController.text) ?? 0,
-      ) : null,
+      manualTargets: _targetsMode == TargetsMode.manual
+          ? MacroTargets(
+              calories: int.tryParse(_caloriesController.text) ?? 0,
+              protein: int.tryParse(_proteinController.text) ?? 0,
+              carbs: int.tryParse(_carbsController.text) ?? 0,
+              fat: int.tryParse(_fatController.text) ?? 0,
+            )
+          : null,
     );
 
     final previewTargets = TargetCalculator.calculateTargets(tempProfile);
@@ -559,17 +567,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Calories', style: TextStyle(fontWeight: FontWeight.w600)),
-                    Text('${previewTargets.calories}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    const Text('Calories',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text('${previewTargets.calories}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('P: ${previewTargets.protein}g', style: const TextStyle(color: Colors.grey)),
-                    Text('C: ${previewTargets.carbs}g', style: const TextStyle(color: Colors.grey)),
-                    Text('F: ${previewTargets.fat}g', style: const TextStyle(color: Colors.grey)),
+                    Text('P: ${previewTargets.protein}g',
+                        style: const TextStyle(color: Colors.grey)),
+                    Text('C: ${previewTargets.carbs}g',
+                        style: const TextStyle(color: Colors.grey)),
+                    Text('F: ${previewTargets.fat}g',
+                        style: const TextStyle(color: Colors.grey)),
                   ],
                 ),
               ],
@@ -585,11 +599,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildInputField(controller: _proteinController, label: 'Protein (g)', validator: null, keyboardType: TextInputType.number)),
+              Expanded(
+                  child: _buildInputField(
+                      controller: _proteinController,
+                      label: 'Protein (g)',
+                      validator: null,
+                      keyboardType: TextInputType.number)),
               const SizedBox(width: 8),
-              Expanded(child: _buildInputField(controller: _carbsController, label: 'Carbs (g)', validator: null, keyboardType: TextInputType.number)),
+              Expanded(
+                  child: _buildInputField(
+                      controller: _carbsController,
+                      label: 'Carbs (g)',
+                      validator: null,
+                      keyboardType: TextInputType.number)),
               const SizedBox(width: 8),
-              Expanded(child: _buildInputField(controller: _fatController, label: 'Fat (g)', validator: null, keyboardType: TextInputType.number)),
+              Expanded(
+                  child: _buildInputField(
+                      controller: _fatController,
+                      label: 'Fat (g)',
+                      validator: null,
+                      keyboardType: TextInputType.number)),
             ],
           ),
         ],
@@ -606,7 +635,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.blue : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? Colors.blue : Colors.grey[300]!),
+          border:
+              Border.all(color: isSelected ? Colors.blue : Colors.grey[300]!),
         ),
         child: Text(
           label,

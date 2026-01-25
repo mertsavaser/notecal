@@ -328,16 +328,16 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                                         child: Container(
                                           padding: const EdgeInsets.all(14),
                                           child: Icon(Icons.remove,
-                                              color: Colors.grey[600], size: 20),
+                                              color: Colors.grey[600],
+                                              size: 20),
                                         ),
                                       ),
                                     ),
                                     Expanded(
                                       child: TextField(
                                         controller: _amountController,
-                                        keyboardType:
-                                            const TextInputType.numberWithOptions(
-                                                decimal: true),
+                                        keyboardType: const TextInputType
+                                            .numberWithOptions(decimal: true),
                                         inputFormatters: [
                                           FilteringTextInputFormatter.allow(
                                               RegExp(r'^\d+\.?\d{0,2}')),
@@ -350,14 +350,15 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                                         ),
                                         decoration: const InputDecoration(
                                           border: InputBorder.none,
-                                          contentPadding:
-                                              EdgeInsets.symmetric(vertical: 12),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 12),
                                         ),
                                         onChanged: (value) {
                                           final parsed = double.tryParse(value);
                                           if (parsed != null) {
                                             setState(() {
-                                              _amount = parsed.clamp(0.0, 10000.0);
+                                              _amount =
+                                                  parsed.clamp(0.0, 10000.0);
                                             });
                                           }
                                         },
@@ -374,7 +375,8 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                                         child: Container(
                                           padding: const EdgeInsets.all(14),
                                           child: Icon(Icons.add,
-                                              color: Colors.grey[600], size: 20),
+                                              color: Colors.grey[600],
+                                              size: 20),
                                         ),
                                       ),
                                     ),

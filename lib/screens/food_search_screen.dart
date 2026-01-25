@@ -23,7 +23,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
   final TextEditingController _searchController = TextEditingController();
   final FirestoreFoodService _foodService = FirestoreFoodService();
   final MealService _mealService = MealService();
-  
+
   late TabController _tabController;
   Timer? _debounceTimer;
 
@@ -108,7 +108,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
     final proteinController = TextEditingController();
     final carbsController = TextEditingController();
     final fatController = TextEditingController();
-    
+
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -117,59 +117,92 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name *')),
-              TextField(controller: calsController, decoration: const InputDecoration(labelText: 'Calories (kcal) *'), keyboardType: TextInputType.number),
+              TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name *')),
+              TextField(
+                  controller: calsController,
+                  decoration:
+                      const InputDecoration(labelText: 'Calories (kcal) *'),
+                  keyboardType: TextInputType.number),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: amountController, decoration: const InputDecoration(labelText: 'Amount'), keyboardType: TextInputType.number)),
+                  Expanded(
+                      child: TextField(
+                          controller: amountController,
+                          decoration:
+                              const InputDecoration(labelText: 'Amount'),
+                          keyboardType: TextInputType.number)),
                   const SizedBox(width: 16),
-                  Expanded(child: TextField(controller: unitController, decoration: const InputDecoration(labelText: 'Unit'))),
+                  Expanded(
+                      child: TextField(
+                          controller: unitController,
+                          decoration:
+                              const InputDecoration(labelText: 'Unit'))),
                 ],
               ),
               const SizedBox(height: 16),
-              const Text('Macros (Optional)', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Macros (Optional)',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: proteinController, decoration: const InputDecoration(labelText: 'Protein (g)'), keyboardType: TextInputType.number)),
+                  Expanded(
+                      child: TextField(
+                          controller: proteinController,
+                          decoration:
+                              const InputDecoration(labelText: 'Protein (g)'),
+                          keyboardType: TextInputType.number)),
                   const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: carbsController, decoration: const InputDecoration(labelText: 'Carbs (g)'), keyboardType: TextInputType.number)),
+                  Expanded(
+                      child: TextField(
+                          controller: carbsController,
+                          decoration:
+                              const InputDecoration(labelText: 'Carbs (g)'),
+                          keyboardType: TextInputType.number)),
                   const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: fatController, decoration: const InputDecoration(labelText: 'Fat (g)'), keyboardType: TextInputType.number)),
+                  Expanded(
+                      child: TextField(
+                          controller: fatController,
+                          decoration:
+                              const InputDecoration(labelText: 'Fat (g)'),
+                          keyboardType: TextInputType.number)),
                 ],
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(
-            onPressed: () async {
-              if (nameController.text.isEmpty || calsController.text.isEmpty) return;
-              
-              final cal = double.tryParse(calsController.text) ?? 0;
-              final amount = double.tryParse(amountController.text) ?? 1;
-              final protein = double.tryParse(proteinController.text);
-              final carbs = double.tryParse(carbsController.text);
-              final fat = double.tryParse(fatController.text);
-              
-              await _mealService.addFood(
-                date: _mealService.getTodayDate(), 
-                mealId: widget.mealId, 
-                name: nameController.text, 
-                calories: cal, 
-                amount: amount, 
-                unit: unitController.text,
-                protein: protein,
-                carbs: carbs,
-                fat: fat,
-              );
-              if (mounted) {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Close search screen
-              }
-            }, 
-            child: const Text('Add')
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () async {
+                if (nameController.text.isEmpty || calsController.text.isEmpty)
+                  return;
+
+                final cal = double.tryParse(calsController.text) ?? 0;
+                final amount = double.tryParse(amountController.text) ?? 1;
+                final protein = double.tryParse(proteinController.text);
+                final carbs = double.tryParse(carbsController.text);
+                final fat = double.tryParse(fatController.text);
+
+                await _mealService.addFood(
+                  date: _mealService.getTodayDate(),
+                  mealId: widget.mealId,
+                  name: nameController.text,
+                  calories: cal,
+                  amount: amount,
+                  unit: unitController.text,
+                  protein: protein,
+                  carbs: carbs,
+                  fat: fat,
+                );
+                if (mounted) {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Close search screen
+                }
+              },
+              child: const Text('Add')),
         ],
       ),
     );
@@ -177,7 +210,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
 
   Future<void> _addSavedMeal(Map<String, dynamic> savedMeal) async {
     final foods = savedMeal['foods'] as List<dynamic>;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -227,10 +260,15 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Template'),
-        content: const Text('Are you sure you want to delete this saved meal template?'),
+        content: const Text(
+            'Are you sure you want to delete this saved meal template?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -301,7 +339,8 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
 
   Widget _buildSearchTab() {
     if (_isSearching) {
-      return const Center(child: CircularProgressIndicator(color: Colors.black));
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.black));
     }
 
     if (!_hasSearched && _searchResults.isEmpty) {
@@ -311,7 +350,8 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
           children: [
             Icon(Icons.search, size: 64, color: Colors.grey[300]),
             const SizedBox(height: 16),
-            Text('Search for food to add to your meal', style: TextStyle(fontSize: 16, color: Colors.grey[500])),
+            Text('Search for food to add to your meal',
+                style: TextStyle(fontSize: 16, color: Colors.grey[500])),
             const SizedBox(height: 24),
             OutlinedButton.icon(
               onPressed: _createCustomFood,
@@ -331,7 +371,8 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
           children: [
             Icon(Icons.no_food, size: 64, color: Colors.grey[300]),
             const SizedBox(height: 16),
-            Text('No food found', style: TextStyle(fontSize: 16, color: Colors.grey[500])),
+            Text('No food found',
+                style: TextStyle(fontSize: 16, color: Colors.grey[500])),
             const SizedBox(height: 24),
             OutlinedButton.icon(
               onPressed: _createCustomFood,
@@ -368,11 +409,14 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
       future: _mealService.getRecentFoods(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.black));
+          return const Center(
+              child: CircularProgressIndicator(color: Colors.black));
         }
         final foods = snapshot.data ?? [];
         if (foods.isEmpty) {
-          return Center(child: Text('No recent foods', style: TextStyle(color: Colors.grey[500])));
+          return Center(
+              child: Text('No recent foods',
+                  style: TextStyle(color: Colors.grey[500])));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -400,7 +444,8 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
       stream: _mealService.getSavedMealsStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.black));
+          return const Center(
+              child: CircularProgressIndicator(color: Colors.black));
         }
         final savedMeals = snapshot.data ?? [];
         if (savedMeals.isEmpty) {
@@ -410,9 +455,11 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
               children: [
                 Icon(Icons.bookmark_border, size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 16),
-                Text('No saved meals', style: TextStyle(color: Colors.grey[500])),
+                Text('No saved meals',
+                    style: TextStyle(color: Colors.grey[500])),
                 const SizedBox(height: 8),
-                Text('Save meals from Home Screen', style: TextStyle(fontSize: 12, color: Colors.grey[400])),
+                Text('Save meals from Home Screen',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[400])),
               ],
             ),
           );
@@ -423,12 +470,14 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
           itemBuilder: (context, index) {
             final meal = savedMeals[index];
             final foods = meal['foods'] as List<dynamic>;
-            final totalCals = foods.fold<double>(0, (sum, f) => sum + (f['calories'] as num).toDouble());
+            final totalCals = foods.fold<double>(
+                0, (sum, f) => sum + (f['calories'] as num).toDouble());
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               elevation: 0,
               color: const Color(0xFFF8F8F8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               child: InkWell(
                 onTap: () => _addSavedMeal(meal),
                 borderRadius: BorderRadius.circular(16),
@@ -439,20 +488,33 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
                       Container(
                         width: 48,
                         height: 48,
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                        child: const Icon(Icons.restaurant, color: Colors.orange),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12)),
+                        child:
+                            const Icon(Icons.restaurant, color: Colors.orange),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(meal['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
-                            Text('${foods.length} items • ${totalCals.round()} kcal', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                            Text(meal['name'],
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1A1A1A))),
+                            Text(
+                                '${foods.length} items • ${totalCals.round()} kcal',
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.grey[600])),
                           ],
                         ),
                       ),
-                      IconButton(icon: const Icon(Icons.delete_outline, color: Colors.grey), onPressed: () => _deleteSavedMeal(meal['id'])),
+                      IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.grey),
+                          onPressed: () => _deleteSavedMeal(meal['id'])),
                       const Icon(Icons.add_circle_outline, color: Colors.black),
                     ],
                   ),

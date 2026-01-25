@@ -99,15 +99,15 @@ class UserProfile {
   final double? weight;
   final String? gender;
   final String? activityLevel;
-  
+
   // New fields
   final UserGoal goal;
   final TargetsMode targetsMode;
   final MacroTargets? manualTargets;
-  
+
   // Computed/Stored TDEE
   final double? tdee;
-  
+
   final bool profileCompleted;
 
   const UserProfile({
@@ -142,8 +142,8 @@ class UserProfile {
       activityLevel: map['activityLevel'],
       goal: UserGoal.fromString(map['goal']),
       targetsMode: TargetsMode.fromString(map['targetsMode']),
-      manualTargets: map['manualTargets'] != null 
-          ? MacroTargets.fromMap(map['manualTargets']) 
+      manualTargets: map['manualTargets'] != null
+          ? MacroTargets.fromMap(map['manualTargets'])
           : null,
       tdee: (map['tdee'] as num?)?.toDouble(),
       profileCompleted: map['profileCompleted'] == true,

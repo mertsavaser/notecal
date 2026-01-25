@@ -31,7 +31,8 @@ void main() async {
                 final t = AppLocalizations.of(context);
                 return Text(
                   t?.anErrorOccurredTurkish ?? 'An error occurred',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 );
               },
             ),
@@ -89,7 +90,7 @@ void main() async {
   } catch (e, stackTrace) {
     print('[INIT] ❌ Firebase initialization FAILED: $e');
     print('[INIT] Stack trace: $stackTrace');
-    
+
     // Show error screen instead of crashing
     runApp(
       MaterialApp(
@@ -103,8 +104,9 @@ void main() async {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, 
-                    size: 64, 
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
                     color: Colors.red,
                   ),
                   const SizedBox(height: 24),
@@ -114,7 +116,8 @@ void main() async {
                       return Column(
                         children: [
                           Text(
-                            t?.firebaseConfigError ?? 'Firebase Configuration Error',
+                            t?.firebaseConfigError ??
+                                'Firebase Configuration Error',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -123,7 +126,8 @@ void main() async {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            t?.firebaseNotConfigured ?? 'Firebase is not properly configured.',
+                            t?.firebaseNotConfigured ??
+                                'Firebase is not properly configured.',
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.grey,
@@ -133,7 +137,8 @@ void main() async {
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            t?.errorDetail(e.toString()) ?? 'Error: ${e.toString()}',
+                            t?.errorDetail(e.toString()) ??
+                                'Error: ${e.toString()}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.red,

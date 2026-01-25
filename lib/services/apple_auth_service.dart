@@ -28,7 +28,8 @@ class AppleAuthService {
     try {
       final parts = token.split('.');
       if (parts.length != 3) {
-        AppLogger.e('AppleAuthService', 'Invalid JWT format: expected 3 parts, got ${parts.length}');
+        AppLogger.e('AppleAuthService',
+            'Invalid JWT format: expected 3 parts, got ${parts.length}');
         return null;
       }
 
@@ -36,7 +37,7 @@ class AppleAuthService {
       String normalized = payload.replaceAll('-', '+').replaceAll('_', '/');
       final paddingNeeded = (4 - (normalized.length % 4)) % 4;
       normalized += '=' * paddingNeeded;
-      
+
       final decodedBytes = base64Decode(normalized);
       final decodedString = utf8.decode(decodedBytes);
       return jsonDecode(decodedString) as Map<String, dynamic>;
@@ -84,7 +85,7 @@ class AppleAuthService {
         } else {
           AppLogger.e('AppleAuthService', '⚠ JWT payload missing nonce claim');
         }
-        
+
         final aud = jwtPayload['aud']?.toString();
         AppLogger.d('AppleAuthService', 'Bundle ID check: $aud');
       }
@@ -96,7 +97,7 @@ class AppleAuthService {
       }
 
       final identityTokenForFirebase = appleCredential.identityToken!;
-      
+
       final oauthCredential = OAuthProvider("apple.com").credential(
         idToken: identityTokenForFirebase,
         rawNonce: rawNonce,
@@ -112,11 +113,13 @@ class AppleAuthService {
         throw Exception('Firebase sign-in returned null user');
       }
 
-      AppLogger.d('AppleAuthService', 'Successfully signed in: ${userCredential.user!.uid}');
+      AppLogger.d('AppleAuthService',
+          'Successfully signed in: ${userCredential.user!.uid}');
 
       return userCredential;
     } on SignInWithAppleAuthorizationException catch (e) {
-      AppLogger.e('AppleAuthService', 'Apple Authorization Error: ${e.code}', e.message);
+      AppLogger.e('AppleAuthService', 'Apple Authorization Error: ${e.code}',
+          e.message);
 
       String errorMessage = 'Apple Sign-In failed';
 
@@ -138,11 +141,13 @@ class AppleAuthService {
           errorMessage = 'An unknown error occurred during Apple Sign-In.';
           break;
         default:
-          errorMessage = 'Apple Sign-In error: ${e.message ?? e.code.toString()}';
+          errorMessage =
+              'Apple Sign-In error: ${e.message ?? e.code.toString()}';
       }
       throw Exception(errorMessage);
     } on FirebaseAuthException catch (e) {
-      AppLogger.e('AppleAuthService', 'Firebase Auth Error: ${e.code}', e.message);
+      AppLogger.e(
+          'AppleAuthService', 'Firebase Auth Error: ${e.code}', e.message);
 
       String errorMessage = 'Apple Sign-In failed';
 

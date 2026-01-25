@@ -104,15 +104,18 @@ class FirestoreHelper {
       data['tdee'] = tdee;
     }
 
-    await _firestore.collection('users').doc(uid).set(data, SetOptions(merge: true));
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .set(data, SetOptions(merge: true));
   }
 
   /// Save full user profile
   static Future<void> saveUserProfile(UserProfile profile) async {
     await _firestore.collection('users').doc(profile.uid).set(
-      profile.toMap(),
-      SetOptions(merge: true),
-    );
+          profile.toMap(),
+          SetOptions(merge: true),
+        );
   }
 
   /// Delete user data (best effort client-side deletion)
