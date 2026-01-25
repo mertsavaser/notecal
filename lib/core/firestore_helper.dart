@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:notecal/models/user_profile.dart';
+import '../utils/app_logger.dart';
 
 class FirestoreHelper {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -66,6 +69,71 @@ class FirestoreHelper {
       'email': email,
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  /// Unified post-auth step: Ensure user document exists in Firestore.
+  /// This is ALWAYS called after successful authentication.
+  ///
+  /// Sets/merges: uid, email, displayName, provider, createdAt, updatedAt
+  /// Timeout: 10 seconds
+  /// Throws: Exception with readable message on failure
+  static Future<void> ensureUserDoc(User user) async {
+    AppLogger.d('FirestoreHelper', 'ensureUserDoc started for ${user.uid}');
+
+    try {
+      // Determine provider
+      String provider = 'email';
+      if (user.providerData.isNotEmpty) {
+        final providerId = user.providerData.first.providerId;
+        if (providerId == 'google.com') {
+          provider = 'google';
+        } else if (providerId == 'apple.com') {
+          provider = 'apple';
+        } else if (providerId == 'password') {
+          provider = 'email';
+        }
+      }
+
+      AppLogger.d('FirestoreHelper', 'Provider: $provider');
+
+      // Create/update user document with timeout
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set({
+            'uid': user.uid,
+            'email': user.email ?? '',
+            'displayName': user.displayName ?? '',
+            'provider': provider,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true))
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw TimeoutException(
+                'ensureUserDoc timed out after 10 seconds',
+                const Duration(seconds: 10),
+              );
+            },
+          );
+
+      AppLogger.d('FirestoreHelper', 'ensureUserDoc completed successfully');
+    } on TimeoutException catch (e) {
+      AppLogger.e('FirestoreHelper', 'ensureUserDoc timeout', e);
+      throw Exception('Network timeout. Please try again.');
+    } on FirebaseException catch (e) {
+      AppLogger.e('FirestoreHelper', 'ensureUserDoc Firestore error', e);
+      if (e.code == 'permission-denied') {
+        throw Exception(
+          'Login succeeded but profile sync failed (Firestore permission). Please contact support.',
+        );
+      }
+      throw Exception('Failed to sync profile: ${e.message ?? e.code}');
+    } catch (e) {
+      AppLogger.e('FirestoreHelper', 'ensureUserDoc general error', e);
+      throw Exception('Failed to sync profile: ${e.toString()}');
+    }
   }
 
   /// Update user profile (Legacy/Specific fields)

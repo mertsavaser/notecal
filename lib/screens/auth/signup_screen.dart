@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:notecal/l10n/app_localizations.dart';
 import '../../widgets/input_field.dart';
 import '../../widgets/primary_button.dart';
-import '../../core/firestore_helper.dart';
+import '../../utils/app_logger.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -63,26 +64,30 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
+    if (_isLoading) return;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Create user with email and password
-      final userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      AppLogger.d('SignupScreen', 'Email signup started');
 
-      // Create base Firestore user document
-      await FirestoreHelper.createBaseUserDocument(
-        userCredential.user!.uid,
-        _emailController.text.trim(),
-      );
+      await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          )
+          .timeout(
+            const Duration(seconds: 20),
+            onTimeout: () {
+              throw TimeoutException('Signup timed out', const Duration(seconds: 20));
+            },
+          );
 
-      // Navigation is handled automatically by AuthWrapper
-      // User will be redirected to ProfileSetupScreen
+      AppLogger.d('SignupScreen', 'Email signup succeeded - AuthWrapper will handle post-auth');
+      // Navigation and ensureUserDoc() handled automatically by AuthWrapper via authStateChanges
+
       if (mounted) {
         final t = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,6 +95,16 @@ class _SignupScreenState extends State<SignupScreen> {
             content: Text(t.accountCreatedSuccessfully),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } on TimeoutException catch (e) {
+      AppLogger.e('SignupScreen', 'Timeout during signup', e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Network timeout. Please try again.'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -123,10 +138,15 @@ class _SignupScreenState extends State<SignupScreen> {
         );
       }
     } catch (e) {
+      AppLogger.e('SignupScreen', 'Signup error', e);
       if (mounted) {
+        String errorMessage = 'Error: ${e.toString().replaceFirst('Exception: ', '')}';
+        if (e.toString().contains('timeout')) {
+          errorMessage = 'Network timeout. Please try again.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );

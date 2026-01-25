@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:notecal/l10n/app_localizations.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/auth/profile_setup_screen.dart';
+import '../utils/app_logger.dart';
 import 'firestore_helper.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -17,43 +19,26 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    // Check current user immediately
     final currentUser = FirebaseAuth.instance.currentUser;
-    print(
-        '[AuthWrapper] initState - currentUser: ${currentUser?.uid ?? "null"}');
+    AppLogger.d('AuthWrapper', 'initState - currentUser: ${currentUser?.uid ?? "null"}');
   }
 
   @override
   Widget build(BuildContext context) {
-    print('[AuthWrapper] build() called');
-
-    // Get current user immediately (for initial state)
     final currentUser = FirebaseAuth.instance.currentUser;
-    print('[AuthWrapper] build() - currentUser: ${currentUser?.uid ?? "null"}');
+    AppLogger.d('AuthWrapper', 'build() - currentUser: ${currentUser?.uid ?? "null"}');
 
     return StreamBuilder<User?>(
-      // Use a stable key that doesn't change on every build
-      // The StreamBuilder will rebuild when the stream emits, not when the key changes
       key: const ValueKey('auth_wrapper'),
-      // Use authStateChanges() stream - this will emit the current user state
-      // The first event is guaranteed to fire after Firebase Auth restores state
       stream: FirebaseAuth.instance.authStateChanges(),
-      // Provide initial data from currentUser to avoid waiting state
       initialData: currentUser,
       builder: (context, authSnapshot) {
-        // Debug logging
-        print(
-            '[AuthWrapper] StreamBuilder rebuild - ConnectionState: ${authSnapshot.connectionState}');
-        print(
-            '[AuthWrapper] hasData: ${authSnapshot.hasData}, hasError: ${authSnapshot.hasError}');
-        print(
-            '[AuthWrapper] authSnapshot.data: ${authSnapshot.data?.uid ?? "null"}');
+        AppLogger.d('AuthWrapper',
+            'StreamBuilder - ConnectionState: ${authSnapshot.connectionState}, hasData: ${authSnapshot.hasData}, hasError: ${authSnapshot.hasError}');
 
-        // During initial connection, show loading
-        // This ensures we wait for the first event from the stream
         if (authSnapshot.connectionState == ConnectionState.waiting &&
             !authSnapshot.hasData) {
-          print('[AuthWrapper] Waiting for auth state...');
+          AppLogger.d('AuthWrapper', 'Waiting for auth state...');
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -61,18 +46,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
 
-        // Get the user from snapshot (prefer snapshot over currentUser for stream updates)
         final user = authSnapshot.data;
 
-        // No user logged in → show LoginScreen (LoginScreen has its own Scaffold)
         if (user == null) {
-          print('[AuthWrapper] No user - showing LoginScreen');
+          AppLogger.d('AuthWrapper', 'No user - showing LoginScreen');
           return const LoginScreen();
         }
 
-        // Handle errors in stream
         if (authSnapshot.hasError) {
-          print('[AuthWrapper] Error in auth stream: ${authSnapshot.error}');
+          AppLogger.e('AuthWrapper', 'Error in auth stream', authSnapshot.error);
           return Scaffold(
             backgroundColor: Colors.white,
             body: Center(
@@ -103,9 +85,193 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
 
-        // User is logged in → check profile status
-        print('[AuthWrapper] User logged in (${user.uid}) - checking profile');
-        return _ProfileChecker(uid: user.uid);
+        // User is logged in → ensure Firestore doc exists, then check profile
+        AppLogger.d('AuthWrapper', 'User logged in (${user.uid}) - ensuring Firestore doc');
+        return _PostAuthHandler(user: user);
+      },
+    );
+  }
+}
+
+class _PostAuthHandler extends StatefulWidget {
+  final User user;
+
+  const _PostAuthHandler({required this.user});
+
+  @override
+  State<_PostAuthHandler> createState() => _PostAuthHandlerState();
+}
+
+class _PostAuthHandlerState extends State<_PostAuthHandler> {
+  Future<void>? _postAuthFuture;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    AppLogger.d('PostAuthHandler', 'initState - UID: ${widget.user.uid}');
+    _postAuthFuture = _ensureUserDocAndCheckProfile();
+  }
+
+  @override
+  void didUpdateWidget(_PostAuthHandler oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user.uid != widget.user.uid) {
+      AppLogger.d('PostAuthHandler',
+          'UID changed from ${oldWidget.user.uid} to ${widget.user.uid}');
+      setState(() {
+        _postAuthFuture = _ensureUserDocAndCheckProfile();
+        _errorMessage = null;
+      });
+    }
+  }
+
+  Future<void> _ensureUserDocAndCheckProfile() async {
+    try {
+      AppLogger.d('PostAuthHandler', 'Step 1: Ensuring Firestore doc...');
+      await FirestoreHelper.ensureUserDoc(widget.user);
+      AppLogger.d('PostAuthHandler', 'Step 2: Firestore doc ensured, checking profile...');
+      
+      final isComplete =
+          await FirestoreHelper.checkUserProfileComplete(widget.user.uid);
+      AppLogger.d('PostAuthHandler', 'Profile complete: $isComplete');
+      
+      if (!mounted) return;
+      
+      if (isComplete) {
+        AppLogger.d('PostAuthHandler', 'Entering HomeScreen');
+      } else {
+        AppLogger.d('PostAuthHandler', 'Entering ProfileSetupScreen');
+      }
+    } catch (e) {
+      AppLogger.e('PostAuthHandler', 'Error in post-auth flow', e);
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  void _refreshProfile() {
+    AppLogger.d('PostAuthHandler', 'Refreshing profile check...');
+    setState(() {
+      _postAuthFuture = _ensureUserDocAndCheckProfile();
+      _errorMessage = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Builder(
+                  builder: (context) {
+                    final t = AppLocalizations.of(context);
+                    return Text(
+                      t?.authenticationError ?? 'Authentication Error',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    FirebaseAuth.instance.signOut();
+                  },
+                  child: Builder(
+                    builder: (context) {
+                      final t = AppLocalizations.of(context);
+                      return Text(t?.retry ?? 'Retry');
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return FutureBuilder<void>(
+      future: _postAuthFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) {
+                        final t = AppLocalizations.of(context);
+                        return Text(
+                          t?.authenticationError ?? 'Authentication Error',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      snapshot.error.toString(),
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        FirebaseAuth.instance.signOut();
+                      },
+                      child: Builder(
+                        builder: (context) {
+                          final t = AppLocalizations.of(context);
+                          return Text(t?.retry ?? 'Retry');
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Check profile completeness
+        return _ProfileChecker(
+          uid: widget.user.uid,
+          onRefresh: _refreshProfile,
+        );
       },
     );
   }
@@ -113,8 +279,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
 class _ProfileChecker extends StatefulWidget {
   final String uid;
+  final VoidCallback onRefresh;
 
-  const _ProfileChecker({required this.uid});
+  const _ProfileChecker({
+    required this.uid,
+    required this.onRefresh,
+  });
 
   @override
   State<_ProfileChecker> createState() => _ProfileCheckerState();
@@ -126,43 +296,21 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
   @override
   void initState() {
     super.initState();
-    print('[ProfileChecker] initState - UID: ${widget.uid}');
+    AppLogger.d('ProfileChecker', 'initState - UID: ${widget.uid}');
     _profileCheckFuture = _checkProfileComplete();
   }
 
-  @override
-  void didUpdateWidget(_ProfileChecker oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Re-check if UID changes (shouldn't happen, but safety check)
-    if (oldWidget.uid != widget.uid) {
-      print(
-          '[ProfileChecker] UID changed from ${oldWidget.uid} to ${widget.uid} - rechecking');
-      setState(() {
-        _profileCheckFuture = _checkProfileComplete();
-      });
-    }
-  }
-
-  /// Check if user profile is complete (has required fields)
   Future<bool> _checkProfileComplete() async {
     try {
-      print(
-          '[ProfileChecker] Checking profile completeness for UID: ${widget.uid}');
+      AppLogger.d('ProfileChecker', 'Checking profile completeness');
       final isComplete =
           await FirestoreHelper.checkUserProfileComplete(widget.uid);
-      print('[ProfileChecker] exists: $isComplete');
+      AppLogger.d('ProfileChecker', 'Profile complete: $isComplete');
       return isComplete;
     } catch (e) {
-      print('[ProfileChecker] Error checking profile: $e');
+      AppLogger.e('ProfileChecker', 'Error checking profile', e);
       return false;
     }
-  }
-
-  void _refreshProfile() {
-    print('[ProfileChecker] Refreshing profile check...');
-    setState(() {
-      _profileCheckFuture = _checkProfileComplete();
-    });
   }
 
   @override
@@ -170,19 +318,7 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
     return FutureBuilder<bool>(
       future: _profileCheckFuture,
       builder: (context, snapshot) {
-        // Debug logging
-        print(
-            '[ProfileChecker] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
-        print(
-            '[ProfileChecker] hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
-
-        if (snapshot.hasError) {
-          print('[ProfileChecker] Error: ${snapshot.error}');
-        }
-
-        // Show loading while checking profile
         if (snapshot.connectionState == ConnectionState.waiting) {
-          print('[ProfileChecker] Checking profile existence...');
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -190,31 +326,17 @@ class _ProfileCheckerState extends State<_ProfileChecker> {
           );
         }
 
-        // Handle errors - assume profile doesn't exist
-        if (snapshot.hasError || !snapshot.hasData) {
-          print(
-              '[ProfileChecker] Profile check failed or no data - showing ProfileSetupScreen');
-          return ProfileSetupScreen(
-            key: ValueKey(widget.uid),
-            onProfileSaved: _refreshProfile,
-          );
-        }
+        final profileExists = snapshot.data ?? false;
 
-        final profileExists = snapshot.data!;
-        print('[ProfileChecker] exists: $profileExists');
-
-        // Profile exists → show HomeScreen
         if (profileExists) {
-          print('[ProfileChecker] Profile complete - showing HomeScreen');
+          AppLogger.d('ProfileChecker', 'Entering HomeScreen');
           return const HomeScreen();
         }
 
-        // Profile does NOT exist → show SetupProfileScreen
-        print(
-            '[ProfileChecker] Profile incomplete - showing ProfileSetupScreen');
+        AppLogger.d('ProfileChecker', 'Entering ProfileSetupScreen');
         return ProfileSetupScreen(
           key: ValueKey(widget.uid),
-          onProfileSaved: _refreshProfile,
+          onProfileSaved: widget.onRefresh,
         );
       },
     );
