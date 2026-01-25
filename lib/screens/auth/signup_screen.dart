@@ -75,17 +75,19 @@ class _SignupScreenState extends State<SignupScreen> {
 
       await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          )
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      )
           .timeout(
-            const Duration(seconds: 20),
-            onTimeout: () {
-              throw TimeoutException('Signup timed out', const Duration(seconds: 20));
-            },
-          );
+        const Duration(seconds: 20),
+        onTimeout: () {
+          throw TimeoutException(
+              'Signup timed out', const Duration(seconds: 20));
+        },
+      );
 
-      AppLogger.d('SignupScreen', 'Email signup succeeded - AuthWrapper will handle post-auth');
+      AppLogger.d('SignupScreen',
+          'Email signup succeeded - AuthWrapper will handle post-auth');
       // Navigation and ensureUserDoc() handled automatically by AuthWrapper via authStateChanges
 
       if (mounted) {
@@ -140,7 +142,8 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (e) {
       AppLogger.e('SignupScreen', 'Signup error', e);
       if (mounted) {
-        String errorMessage = 'Error: ${e.toString().replaceFirst('Exception: ', '')}';
+        String errorMessage =
+            'Error: ${e.toString().replaceFirst('Exception: ', '')}';
         if (e.toString().contains('timeout')) {
           errorMessage = 'Network timeout. Please try again.';
         }

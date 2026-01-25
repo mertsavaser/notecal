@@ -97,26 +97,22 @@ class FirestoreHelper {
       AppLogger.d('FirestoreHelper', 'Provider: $provider');
 
       // Create/update user document with timeout
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .set({
-            'uid': user.uid,
-            'email': user.email ?? '',
-            'displayName': user.displayName ?? '',
-            'provider': provider,
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true))
-          .timeout(
+      await _firestore.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'email': user.email ?? '',
+        'displayName': user.displayName ?? '',
+        'provider': provider,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException(
+            'ensureUserDoc timed out after 10 seconds',
             const Duration(seconds: 10),
-            onTimeout: () {
-              throw TimeoutException(
-                'ensureUserDoc timed out after 10 seconds',
-                const Duration(seconds: 10),
-              );
-            },
           );
+        },
+      );
 
       AppLogger.d('FirestoreHelper', 'ensureUserDoc completed successfully');
     } on TimeoutException catch (e) {

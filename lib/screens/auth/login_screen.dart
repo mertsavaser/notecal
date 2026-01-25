@@ -65,20 +65,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       AppLogger.d('LoginScreen', 'Email sign-in started');
-      
+
       await FirebaseAuth.instance
           .signInWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          )
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      )
           .timeout(
-            const Duration(seconds: 20),
-            onTimeout: () {
-              throw TimeoutException('Sign-in timed out', const Duration(seconds: 20));
-            },
-          );
+        const Duration(seconds: 20),
+        onTimeout: () {
+          throw TimeoutException(
+              'Sign-in timed out', const Duration(seconds: 20));
+        },
+      );
 
-      AppLogger.d('LoginScreen', 'Email sign-in succeeded - AuthWrapper will handle post-auth');
+      AppLogger.d('LoginScreen',
+          'Email sign-in succeeded - AuthWrapper will handle post-auth');
       // Navigation and ensureUserDoc() handled automatically by AuthWrapper via authStateChanges
     } on TimeoutException catch (e) {
       AppLogger.e('LoginScreen', 'Timeout during email sign-in', e);
@@ -128,7 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
         if (e.toString().contains('timeout')) {
           errorMessage = 'Network timeout. Please try again.';
         } else {
-          errorMessage = '${t.anErrorOccurred}: ${e.toString().replaceFirst('Exception: ', '')}';
+          errorMessage =
+              '${t.anErrorOccurred}: ${e.toString().replaceFirst('Exception: ', '')}';
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -158,13 +161,13 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       AppLogger.d('LoginScreen', 'Google sign-in started');
 
-      final userCredential = await GoogleAuthService.signInWithGoogle()
-          .timeout(
-            const Duration(seconds: 20),
-            onTimeout: () {
-              throw TimeoutException('Sign-in timed out', const Duration(seconds: 20));
-            },
-          );
+      final userCredential = await GoogleAuthService.signInWithGoogle().timeout(
+        const Duration(seconds: 20),
+        onTimeout: () {
+          throw TimeoutException(
+              'Sign-in timed out', const Duration(seconds: 20));
+        },
+      );
 
       if (!mounted) return;
 
@@ -178,7 +181,8 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Google Sign-In failed: user is null after sign-in');
       }
 
-      AppLogger.d('LoginScreen', 'Google sign-in succeeded: ${user.uid} - AuthWrapper will handle post-auth');
+      AppLogger.d('LoginScreen',
+          'Google sign-in succeeded: ${user.uid} - AuthWrapper will handle post-auth');
       // Navigation and ensureUserDoc() handled automatically by AuthWrapper via authStateChanges
     } on TimeoutException catch (e) {
       AppLogger.e('LoginScreen', 'Timeout during Google sign-in', e);
@@ -230,11 +234,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final t = AppLocalizations.of(context)!;
       String errorMessage = t.googleSignInFailed;
-      
+
       if (e.toString().contains('timeout')) {
         errorMessage = 'Network timeout. Please try again.';
       } else {
-        errorMessage = '${t.googleSignInFailed}: ${e.toString().replaceFirst('Exception: ', '')}';
+        errorMessage =
+            '${t.googleSignInFailed}: ${e.toString().replaceFirst('Exception: ', '')}';
       }
 
       // Check for common configuration errors - only show if login actually failed
@@ -291,13 +296,13 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       AppLogger.d('LoginScreen', 'Apple sign-in started');
 
-      final userCredential = await AppleAuthService.signInWithApple()
-          .timeout(
-            const Duration(seconds: 20),
-            onTimeout: () {
-              throw TimeoutException('Sign-in timed out', const Duration(seconds: 20));
-            },
-          );
+      final userCredential = await AppleAuthService.signInWithApple().timeout(
+        const Duration(seconds: 20),
+        onTimeout: () {
+          throw TimeoutException(
+              'Sign-in timed out', const Duration(seconds: 20));
+        },
+      );
 
       if (!mounted) return;
 
@@ -306,7 +311,8 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Apple Sign-In failed: user is null after sign-in');
       }
 
-      AppLogger.d('LoginScreen', 'Apple sign-in succeeded: ${user.uid} - AuthWrapper will handle post-auth');
+      AppLogger.d('LoginScreen',
+          'Apple sign-in succeeded: ${user.uid} - AuthWrapper will handle post-auth');
       // Navigation and ensureUserDoc() handled automatically by AuthWrapper via authStateChanges
     } on TimeoutException catch (e) {
       AppLogger.e('LoginScreen', 'Timeout during Apple sign-in', e);
@@ -325,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final t = AppLocalizations.of(context)!;
       String errorMessage = t.appleSignInFailed;
-      
+
       if (e.toString().contains('timeout')) {
         errorMessage = 'Network timeout. Please try again.';
       } else if (e is Exception) {

@@ -20,13 +20,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
   void initState() {
     super.initState();
     final currentUser = FirebaseAuth.instance.currentUser;
-    AppLogger.d('AuthWrapper', 'initState - currentUser: ${currentUser?.uid ?? "null"}');
+    AppLogger.d('AuthWrapper',
+        'initState - currentUser: ${currentUser?.uid ?? "null"}');
   }
 
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    AppLogger.d('AuthWrapper', 'build() - currentUser: ${currentUser?.uid ?? "null"}');
+    AppLogger.d(
+        'AuthWrapper', 'build() - currentUser: ${currentUser?.uid ?? "null"}');
 
     return StreamBuilder<User?>(
       key: const ValueKey('auth_wrapper'),
@@ -54,7 +56,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
 
         if (authSnapshot.hasError) {
-          AppLogger.e('AuthWrapper', 'Error in auth stream', authSnapshot.error);
+          AppLogger.e(
+              'AuthWrapper', 'Error in auth stream', authSnapshot.error);
           return Scaffold(
             backgroundColor: Colors.white,
             body: Center(
@@ -86,7 +89,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
 
         // User is logged in → ensure Firestore doc exists, then check profile
-        AppLogger.d('AuthWrapper', 'User logged in (${user.uid}) - ensuring Firestore doc');
+        AppLogger.d('AuthWrapper',
+            'User logged in (${user.uid}) - ensuring Firestore doc');
         return _PostAuthHandler(user: user);
       },
     );
@@ -130,14 +134,15 @@ class _PostAuthHandlerState extends State<_PostAuthHandler> {
     try {
       AppLogger.d('PostAuthHandler', 'Step 1: Ensuring Firestore doc...');
       await FirestoreHelper.ensureUserDoc(widget.user);
-      AppLogger.d('PostAuthHandler', 'Step 2: Firestore doc ensured, checking profile...');
-      
+      AppLogger.d('PostAuthHandler',
+          'Step 2: Firestore doc ensured, checking profile...');
+
       final isComplete =
           await FirestoreHelper.checkUserProfileComplete(widget.user.uid);
       AppLogger.d('PostAuthHandler', 'Profile complete: $isComplete');
-      
+
       if (!mounted) return;
-      
+
       if (isComplete) {
         AppLogger.d('PostAuthHandler', 'Entering HomeScreen');
       } else {
