@@ -1,30 +1,14 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/app_logger.dart';
 
 /// Service class for managing meals and foods in Firestore.
-///
-/// Data Structure:
-/// users/{userId}/days/{yyyy-MM-dd}/meals/{mealId}/foods/{foodId}
-///
-/// Each meal document contains:
-/// - name (String): Display name of the meal
-/// - type (String): "system" or "custom"
-/// - createdAt (Timestamp): When the meal was created
-///
-/// This structure supports:
-/// - Custom meal names (e.g. "Meal #5", "Pre-workout")
-/// - System meals (Breakfast, Lunch, Dinner, Snack)
-/// - Daily meal tracking
-/// - History queries (previous days)
-/// - Real-time updates via StreamBuilder
-/// - Daily summary calculations
 class MealService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   /// System meal names (for quick add)
-  /// These meals use fixed document IDs and are always available
   static const List<String> systemMealNames = ['Breakfast', 'Lunch', 'Dinner'];
 
   /// Map of system meal names to their fixed document IDs
@@ -74,144 +58,78 @@ class MealService {
   }
 
   /// Ensure system meals exist for a given date.
-  /// Creates Breakfast, Lunch, and Dinner with fixed IDs if they don't exist.
-  /// Returns true if all system meals exist or were created successfully.
   Future<bool> ensureSystemMeals(String date) async {
     try {
       for (final mealName in systemMealNames) {
         final mealId = systemMealIds[mealName]!;
-        final mealDoc = await _mealDocRef(date, mealId).get();
-
-        if (!mealDoc.exists) {
-          // Create system meal with fixed ID
-          await _mealDocRef(date, mealId).set({
-            'name': mealName,
-            'type': 'system',
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-        } else {
-          // Ensure existing meal has correct name and type
-          final data = mealDoc.data() as Map<String, dynamic>?;
-          if (data?['name'] != mealName || data?['type'] != 'system') {
-            await _mealDocRef(date, mealId).set({
-              'name': mealName,
-              'type': 'system',
-              'createdAt': data?['createdAt'] ?? FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
-          }
-        }
+        // Use set with merge: true to avoid read costs. 
+        // This ensures the meal exists without waiting for a read.
+        await _mealDocRef(date, mealId).set({
+          'name': mealName,
+          'type': 'system',
+          'createdAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
       return true;
     } catch (e) {
-      print('[MealService] Error ensuring system meals: $e');
+      AppLogger.e('MealService', 'Error ensuring system meals', e);
       return false;
     }
   }
 
-  /// Get system meal ID for a given meal name.
-  /// Returns null if not a system meal.
-  String? getSystemMealId(String mealName) {
-    return systemMealIds[mealName];
+  /// Restore a deleted system meal
+  Future<bool> restoreSystemMeal(String date, String mealName) async {
+    try {
+      final mealId = systemMealIds[mealName];
+      if (mealId == null) return false;
+      
+      await _mealDocRef(date, mealId).set({
+        'name': mealName,
+        'type': 'system',
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      await _updateDailySummary(date);
+      return true;
+    } catch (e) {
+      AppLogger.e('MealService', 'Error restoring system meal', e);
+      return false;
+    }
   }
 
-  /// Create a custom meal with a user-provided name.
-  /// Returns the meal ID if created, null on error.
-  ///
-  /// Data safety: Ensures meal name is non-empty, trimmed, and unique per day.
-  Future<String?> createCustomMeal(String date, String mealName) async {
-    final trimmedName = mealName.trim();
-
-    // Guard: Prevent creating meals without a name
-    if (trimmedName.isEmpty) {
-      throw ArgumentError('Meal name cannot be empty');
-    }
-
-    // Guard: Check for duplicate name (case-insensitive)
-    final isDuplicate = await _checkDuplicateMealName(date, trimmedName);
-    if (isDuplicate) {
-      throw ArgumentError('A meal with this name already exists');
-    }
-
+  /// Create a custom meal
+  Future<String?> createCustomMeal(String date, String name) async {
     try {
-      // Create new meal document with auto-generated ID
-      final mealRef = await _mealsCollectionRef(date).add({
-        'name': trimmedName,
+      final docRef = await _mealsCollectionRef(date).add({
+        'name': name,
         'type': 'custom',
         'createdAt': FieldValue.serverTimestamp(),
       });
-
-      return mealRef.id;
+      return docRef.id;
     } catch (e) {
-      print('[MealService] Error creating custom meal: $e');
+      AppLogger.e('MealService', 'Error creating custom meal', e);
       return null;
     }
   }
 
-  /// Check if a meal name already exists (case-insensitive).
-  /// excludeMealId: Optional meal ID to exclude from check (for rename operations).
-  Future<bool> _checkDuplicateMealName(String date, String mealName,
-      {String? excludeMealId}) async {
-    try {
-      final trimmedName = mealName.trim().toLowerCase();
-      final mealsSnapshot = await _mealsCollectionRef(date).get();
-
-      for (final mealDoc in mealsSnapshot.docs) {
-        // Skip the meal being renamed
-        if (excludeMealId != null && mealDoc.id == excludeMealId) {
-          continue;
-        }
-
-        final mealData = mealDoc.data() as Map<String, dynamic>;
-        final existingName =
-            (mealData['name'] as String? ?? '').trim().toLowerCase();
-
-        if (existingName == trimmedName) {
-          return true; // Duplicate found
-        }
-      }
-
-      return false; // No duplicate
-    } catch (e) {
-      print('[MealService] Error checking duplicate meal name: $e');
-      return false;
-    }
-  }
-
-  /// Rename a meal.
-  /// Returns true if successful, false on error.
-  ///
-  /// Data safety: Ensures new name is non-empty, trimmed, and unique per day.
+  /// Rename a meal
   Future<bool> renameMeal(String date, String mealId, String newName) async {
-    final trimmedName = newName.trim();
-
-    // Guard: Prevent empty names
-    if (trimmedName.isEmpty) {
-      throw ArgumentError('Meal name cannot be empty');
-    }
-
-    // Guard: Check for duplicate name (case-insensitive, excluding current meal)
-    final isDuplicate =
-        await _checkDuplicateMealName(date, trimmedName, excludeMealId: mealId);
-    if (isDuplicate) {
-      throw ArgumentError('A meal with this name already exists');
-    }
-
     try {
-      // Update meal name
+      final trimmedName = newName.trim();
+      if (trimmedName.isEmpty) return false;
+
       await _mealDocRef(date, mealId).update({
         'name': trimmedName,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-
       return true;
     } catch (e) {
-      print('[MealService] Error renaming meal: $e');
+      AppLogger.e('MealService', 'Error renaming meal', e);
       return false;
     }
   }
 
-  /// Delete a meal.
-  /// Returns true if successful, false on error.
+  /// Delete a meal
   Future<bool> deleteMeal(String date, String mealId) async {
     try {
       // Delete all foods in the meal first
@@ -226,33 +144,15 @@ class MealService {
       batch.delete(_mealDocRef(date, mealId));
 
       await batch.commit();
-
-      // Update daily summary
       await _updateDailySummary(date);
-
       return true;
     } catch (e) {
-      print('[MealService] Error deleting meal: $e');
+      AppLogger.e('MealService', 'Error deleting meal', e);
       return false;
     }
   }
 
-  /// Get food count for a meal (for delete confirmation).
-  Future<int> getMealFoodCount(String date, String mealId) async {
-    try {
-      final foodsSnapshot = await _foodsCollectionRef(date, mealId).get();
-      return foodsSnapshot.docs.length;
-    } catch (e) {
-      print('[MealService] Error getting meal food count: $e');
-      return 0;
-    }
-  }
-
-  /// Add a food item to a meal.
-  ///
-  /// Returns the food document ID for optimistic UI updates.
-  ///
-  /// Data safety: Ensures system meals exist before adding food.
+  /// Add a food item to a meal
   Future<String?> addFood({
     required String date,
     required String mealId,
@@ -265,25 +165,16 @@ class MealService {
     double? fat,
   }) async {
     try {
-      // Ensure system meals exist (in case mealId is a system meal)
-      await ensureSystemMeals(date);
-
-      // Verify meal exists
-      final mealDoc = await _mealDocRef(date, mealId).get();
-      if (!mealDoc.exists) {
-        print('[MealService] Meal $mealId does not exist for date $date');
-        return null;
+      // Optimization: Ensure system meals exist with a blind write
+      if (systemMealIds.containsValue(mealId)) {
+         await _mealDocRef(date, mealId).set({
+          'name': systemMealIds.entries.firstWhere((e) => e.value == mealId).key,
+          'type': 'system',
+          'createdAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
-      // Guard: Verify meal has a name
-      final mealData = mealDoc.data() as Map<String, dynamic>?;
-      final mealName = mealData?['name']?.toString().trim();
-      if (mealName == null || mealName.isEmpty) {
-        print('[MealService] Meal $mealId has no name, cannot add food');
-        return null;
-      }
-
-      // Add food document
+      // Add the food
       final foodRef = await _foodsCollectionRef(date, mealId).add({
         'name': name,
         'calories': calories,
@@ -295,21 +186,29 @@ class MealService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // Update daily summary (optional, can be calculated on read)
-      await _updateDailySummary(date);
+      // Await critical updates to ensure consistency
+      await Future.wait([
+        _updateDailySummary(date),
+        addRecentFood({
+          'name': name,
+          'calories': calories,
+          'amount': amount,
+          'unit': unit,
+          'protein': protein,
+          'carbs': carbs,
+          'fat': fat,
+        }),
+      ]);
 
       return foodRef.id;
     } catch (e) {
-      print('[MealService] Error adding food: $e');
-      return null;
+      AppLogger.e('MealService', 'Error adding food', e);
+      rethrow; // Rethrow so UI can handle the error
     }
   }
 
-  /// Get stream of foods for a specific meal.
-  ///
-  /// Use this with StreamBuilder for real-time UI updates.
-  Stream<List<Map<String, dynamic>>> getMealFoodsStream(
-      String date, String mealId) {
+  /// Get stream of foods for a specific meal
+  Stream<List<Map<String, dynamic>>> getMealFoodsStream(String date, String mealId) {
     try {
       return _foodsCollectionRef(date, mealId)
           .orderBy('createdAt', descending: false)
@@ -331,137 +230,79 @@ class MealService {
         }).toList();
       });
     } catch (e) {
-      print('[MealService] Error getting meal foods stream: $e');
-      return Stream.value([]);
+      AppLogger.e('MealService', 'Error getting meal foods stream', e);
+      return Stream.value(<Map<String, dynamic>>[]);
     }
   }
 
-  /// Get stream of all meals for a specific date.
-  ///
-  /// Returns a list of meal objects with their foods, ordered:
-  /// 1. System meals (Breakfast, Lunch, Dinner) in that order
-  /// 2. Custom meals sorted by createdAt
-  ///
-  /// Each meal object contains: id, name, type, foods (list)
-  ///
-  /// Note: This ensures system meals exist and uses asyncMap for foods.
-  /// For real-time food updates, consider using individual StreamBuilders for each meal.
+  /// Get stream of all meals for a specific date
+  /// NOTE: This does NOT fetch foods anymore to save reads and complexity.
+  /// Foods should be fetched by the individual MealCard using getMealFoodsStream.
   Stream<List<Map<String, dynamic>>> getDayMealsStream(String date) {
-    try {
-      // Ensure system meals exist first (fire and forget, will be awaited in stream)
-      ensureSystemMeals(date).then((_) {}).catchError((e) {
-        print(
-            '[MealService] Error ensuring system meals in getDayMealsStream: $e');
-      });
+    return _mealsCollectionRef(date)
+        .snapshots()
+        .map((mealsSnapshot) {
+      try {
+        final List<Map<String, dynamic>> systemMeals = [];
+        final List<Map<String, dynamic>> customMeals = [];
 
-      return _mealsCollectionRef(date)
-          .snapshots()
-          .asyncMap((mealsSnapshot) async {
-        try {
-          // Ensure system meals exist (in case they were just created)
-          await ensureSystemMeals(date);
+        for (final mealDoc in mealsSnapshot.docs) {
+          final mealData = mealDoc.data() as Map<String, dynamic>;
+          final mealId = mealDoc.id;
+          final mealType = mealData['type'] ?? 'custom';
+          String mealName = mealData['name']?.toString().trim() ?? '';
 
-          final List<Map<String, dynamic>> systemMeals = [];
-          final List<Map<String, dynamic>> customMeals = [];
-
-          // Fetch foods for all meals in parallel
-          final futures = mealsSnapshot.docs.map((mealDoc) async {
-            final mealData = mealDoc.data() as Map<String, dynamic>;
-            final mealId = mealDoc.id;
-            final mealType = mealData['type'] ?? 'custom';
-
-            // Guard: Ensure meal has a name
-            String mealName = mealData['name']?.toString().trim() ?? '';
-            if (mealName.isEmpty) {
-              // Fallback: use system meal name if it's a system meal ID
-              if (systemMealIds.containsValue(mealId)) {
-                mealName = systemMealIds.entries
-                    .firstWhere((e) => e.value == mealId,
-                        orElse: () => const MapEntry('', ''))
-                    .key;
-              }
-              // If still empty, skip this meal (shouldn't happen with guards)
-              if (mealName.isEmpty) {
-                print(
-                    '[MealService] Warning: Meal $mealId has no name, skipping');
-                return null;
-              }
+          if (mealName.isEmpty) {
+            if (systemMealIds.containsValue(mealId)) {
+              mealName = systemMealIds.entries
+                  .firstWhere((e) => e.value == mealId,
+                      orElse: () => const MapEntry('', ''))
+                  .key;
             }
+            if (mealName.isEmpty) continue;
+          }
 
-            // Get foods for this meal
-            final foodsSnapshot = await _foodsCollectionRef(date, mealId)
-                .orderBy('createdAt', descending: false)
-                .get();
+          // We do NOT fetch foods here. 
+          // MealCard will listen to foods subcollection.
+          final meal = {
+            'id': mealId,
+            'name': mealName,
+            'type': mealType,
+            'createdAt': mealData['createdAt'],
+            'foods': [], // Empty, populated by MealCard stream
+          };
 
-            final foods = foodsSnapshot.docs.map((foodDoc) {
-              final foodData = foodDoc.data() as Map<String, dynamic>;
-              return {
-                'id': foodDoc.id,
-                'name': foodData['name'] ?? '',
-                'calories': (foodData['calories'] as num?)?.toDouble() ?? 0.0,
-                'amount': (foodData['amount'] as num?)?.toDouble() ?? 0.0,
-                'unit': foodData['unit'] ?? 'g',
-                'protein': (foodData['protein'] as num?)?.toDouble() ?? 0.0,
-                'carbs': (foodData['carbs'] as num?)?.toDouble() ?? 0.0,
-                'fat': (foodData['fat'] as num?)?.toDouble() ?? 0.0,
-                'createdAt': foodData['createdAt'],
-              };
-            }).toList();
-
-            final meal = {
-              'id': mealId,
-              'name': mealName,
-              'type': mealType,
-              'createdAt': mealData['createdAt'],
-              'foods': foods,
-            };
-
-            if (mealType == 'system') {
-              systemMeals.add(meal);
-            } else {
-              customMeals.add(meal);
-            }
-
-            return meal;
-          });
-
-          await Future.wait(futures);
-
-          // Sort system meals: Breakfast, Lunch, Dinner
-          systemMeals.sort((a, b) {
-            final aIndex = systemMealNames.indexOf(a['name'] as String);
-            final bIndex = systemMealNames.indexOf(b['name'] as String);
-            if (aIndex == -1) return 1;
-            if (bIndex == -1) return -1;
-            return aIndex.compareTo(bIndex);
-          });
-
-          // Sort custom meals by createdAt
-          customMeals.sort((a, b) {
-            final aTime = a['createdAt'] as Timestamp?;
-            final bTime = b['createdAt'] as Timestamp?;
-            if (aTime == null) return 1;
-            if (bTime == null) return -1;
-            return aTime.compareTo(bTime);
-          });
-
-          // Return: system meals first, then custom meals
-          return [...systemMeals, ...customMeals];
-        } catch (e) {
-          print('[MealService] Error in asyncMap for getDayMealsStream: $e');
-          return <Map<String, dynamic>>[]; // Return empty list on error
+          if (mealType == 'system') {
+            systemMeals.add(meal);
+          } else {
+            customMeals.add(meal);
+          }
         }
-      }).handleError((error) {
-        print('[MealService] Stream error in getDayMealsStream: $error');
-      });
-    } catch (e) {
-      print('[MealService] Error getting day meals stream: $e');
-      return Stream.value([]);
-    }
+
+        systemMeals.sort((a, b) {
+          final aIndex = systemMealNames.indexOf(a['name'] as String);
+          final bIndex = systemMealNames.indexOf(b['name'] as String);
+          if (aIndex == -1) return 1;
+          if (bIndex == -1) return -1;
+          return aIndex.compareTo(bIndex);
+        });
+
+        customMeals.sort((a, b) {
+          final aTime = a['createdAt'] as Timestamp?;
+          final bTime = b['createdAt'] as Timestamp?;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+          return aTime.compareTo(bTime);
+        });
+
+        return [...systemMeals, ...customMeals];
+      } catch (e) {
+        AppLogger.e('MealService', 'Error mapping meals', e);
+        return <Map<String, dynamic>>[];
+      }
+    });
   }
 
-  /// Update a food item's amount and unit.
-  /// Recalculates macros based on the original food data.
   Future<bool> updateFood({
     required String date,
     required String mealId,
@@ -471,21 +312,16 @@ class MealService {
   }) async {
     try {
       final foodDoc = await _foodsCollectionRef(date, mealId).doc(foodId).get();
-      if (!foodDoc.exists) {
-        print('[MealService] Food $foodId does not exist');
-        return false;
-      }
+      if (!foodDoc.exists) return false;
 
       final foodData = foodDoc.data() as Map<String, dynamic>;
       final originalAmount = (foodData['amount'] as num?)?.toDouble() ?? 100.0;
-      final originalCalories =
-          (foodData['calories'] as num?)?.toDouble() ?? 0.0;
+      final originalCalories = (foodData['calories'] as num?)?.toDouble() ?? 0.0;
       final originalProtein = (foodData['protein'] as num?)?.toDouble() ?? 0.0;
       final originalCarbs = (foodData['carbs'] as num?)?.toDouble() ?? 0.0;
       final originalFat = (foodData['fat'] as num?)?.toDouble() ?? 0.0;
 
-      // Recalculate based on new amount
-      final ratio = amount / originalAmount;
+      final ratio = amount / (originalAmount == 0 ? 1 : originalAmount);
       final newCalories = originalCalories * ratio;
       final newProtein = originalProtein * ratio;
       final newCarbs = originalCarbs * ratio;
@@ -503,30 +339,26 @@ class MealService {
       await _updateDailySummary(date);
       return true;
     } catch (e) {
-      print('[MealService] Error updating food: $e');
+      AppLogger.e('MealService', 'Error updating food', e);
       return false;
     }
   }
 
-  /// Delete a food item from a meal.
   Future<bool> deleteFood(String date, String mealId, String foodId) async {
     try {
       await _foodsCollectionRef(date, mealId).doc(foodId).delete();
       await _updateDailySummary(date);
       return true;
     } catch (e) {
-      print('[MealService] Error deleting food: $e');
+      AppLogger.e('MealService', 'Error deleting food', e);
       return false;
     }
   }
 
-  /// Calculate and update daily summary.
-  ///
-  /// Stores totals under: users/{userId}/days/{date}/summary
   Future<void> _updateDailySummary(String date) async {
     try {
+      // Logic unchanged, but we might want to optimize this later
       final mealsSnapshot = await _mealsCollectionRef(date).get();
-
       double totalCalories = 0.0;
       double totalProtein = 0.0;
       double totalCarbs = 0.0;
@@ -536,7 +368,6 @@ class MealService {
       for (final mealDoc in mealsSnapshot.docs) {
         final mealId = mealDoc.id;
         final foodsSnapshot = await _foodsCollectionRef(date, mealId).get();
-
         double mealCal = 0.0;
         for (final foodDoc in foodsSnapshot.docs) {
           final data = foodDoc.data() as Map<String, dynamic>;
@@ -545,7 +376,6 @@ class MealService {
           totalCarbs += (data['carbs'] as num?)?.toDouble() ?? 0.0;
           totalFat += (data['fat'] as num?)?.toDouble() ?? 0.0;
         }
-
         mealCalories[mealId] = mealCal;
         totalCalories += mealCal;
       }
@@ -561,42 +391,30 @@ class MealService {
         },
       }, SetOptions(merge: true));
     } catch (e) {
-      print('[MealService] Error updating daily summary: $e');
+      AppLogger.e('MealService', 'Error updating daily summary', e);
     }
   }
 
-  /// Get daily summary for a specific date.
-  ///
-  /// Returns null if no summary exists (day has no meals).
+  // ... (getDailySummary, getDailySummaryStream, etc keep unchanged)
   Future<Map<String, dynamic>?> getDailySummary(String date) async {
     try {
       final dayDoc = await _dayDocRef(date).get();
-      if (!dayDoc.exists) {
-        return null;
-      }
-
+      if (!dayDoc.exists) return null;
       final data = dayDoc.data() as Map<String, dynamic>?;
       return data?['summary'] as Map<String, dynamic>?;
     } catch (e) {
-      print('[MealService] Error getting daily summary: $e');
       return null;
     }
   }
 
-  /// Get stream of daily summary for real-time updates.
   Stream<Map<String, dynamic>?> getDailySummaryStream(String date) {
     return _dayDocRef(date).snapshots().map((snapshot) {
-      if (!snapshot.exists) {
-        return null;
-      }
+      if (!snapshot.exists) return null;
       final data = snapshot.data() as Map<String, dynamic>?;
       return data?['summary'] as Map<String, dynamic>?;
     });
   }
 
-  /// Get list of dates that have meal data (for history/progress screen).
-  ///
-  /// Returns dates in descending order (most recent first).
   Future<List<String>> getHistoryDates({int limit = 30}) async {
     try {
       final daysSnapshot = await _firestore
@@ -605,23 +423,17 @@ class MealService {
           .collection('days')
           .limit(limit)
           .get();
-
       final dates = daysSnapshot.docs.map((doc) => doc.id).toList();
       dates.sort((a, b) => b.compareTo(a));
       return dates;
     } catch (e) {
-      print('[MealService] Error getting history dates: $e');
       return [];
     }
   }
 
-  /// Get weekly dates (Monday to Sunday) for the current week.
-  /// Returns list of date strings in yyyy-MM-dd format.
   List<String> getCurrentWeekDates() {
     final now = DateTime.now();
-    // Get Monday of current week
     final monday = now.subtract(Duration(days: now.weekday - 1));
-
     final List<String> dates = [];
     for (int i = 0; i < 7; i++) {
       final date = monday.add(Duration(days: i));
@@ -630,39 +442,165 @@ class MealService {
     return dates;
   }
 
-  /// Get daily summaries for a list of dates.
-  /// Returns a map of date -> summary.
-  Future<Map<String, Map<String, dynamic>?>> getWeeklySummaries(
-      List<String> dates) async {
+  Future<Map<String, Map<String, dynamic>?>> getWeeklySummaries(List<String> dates) async {
     final Map<String, Map<String, dynamic>?> summaries = {};
-
     for (final date in dates) {
       summaries[date] = await getDailySummary(date);
     }
-
     return summaries;
   }
 
-  /// Convenience method: Get today's date string
   String getTodayDate() => _todayDate;
 
-  /// Convenience method: Format DateTime to yyyy-MM-dd
   static String formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  /// Parse date string (yyyy-MM-dd) to DateTime
   static DateTime? parseDate(String dateString) {
     try {
       final parts = dateString.split('-');
       if (parts.length != 3) return null;
-      return DateTime(
-        int.parse(parts[0]),
-        int.parse(parts[1]),
-        int.parse(parts[2]),
-      );
+      return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
     } catch (e) {
       return null;
+    }
+  }
+
+  Future<void> addRecentFood(Map<String, dynamic> food) async {
+    try {
+      final recentRef = _firestore.collection('users').doc(_userId).collection('recent_foods');
+      final querySnapshot = await recentRef.where('name', isEqualTo: food['name']).limit(1).get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        await querySnapshot.docs.first.reference.update({
+          'lastUsedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        final foodData = Map<String, dynamic>.from(food);
+        foodData['lastUsedAt'] = FieldValue.serverTimestamp();
+        foodData.remove('id');
+        foodData.remove('createdAt');
+        await recentRef.add(foodData);
+      }
+    } catch (e) {
+      AppLogger.e('MealService', 'Error adding recent food', e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRecentFoods() async {
+    try {
+      final snapshot = await _firestore.collection('users').doc(_userId).collection('recent_foods').orderBy('lastUsedAt', descending: true).limit(10).get();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'name': data['name'] ?? '',
+          'calories': (data['calories'] as num?)?.toDouble() ?? 0.0,
+          'amount': (data['amount'] as num?)?.toDouble() ?? 0.0,
+          'unit': data['unit'] ?? 'g',
+          'protein': (data['protein'] as num?)?.toDouble() ?? 0.0,
+          'carbs': (data['carbs'] as num?)?.toDouble() ?? 0.0,
+          'fat': (data['fat'] as num?)?.toDouble() ?? 0.0,
+        };
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Saved Meals Operations
+  
+  Future<String?> createSavedMeal(String name, List<Map<String, dynamic>> foods) async {
+    try {
+      final cleanFoods = foods.map((f) {
+        final cf = Map<String, dynamic>.from(f);
+        cf.remove('id');
+        cf.remove('createdAt');
+        return cf;
+      }).toList();
+
+      final docRef = await _firestore.collection('users').doc(_userId).collection('saved_meals').add({
+        'name': name,
+        'foods': cleanFoods,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return docRef.id;
+    } catch (e) {
+      AppLogger.e('MealService', 'Error creating saved meal', e);
+      return null;
+    }
+  }
+
+  Future<void> updateSavedMealName(String id, String newName) async {
+    try {
+      await _firestore.collection('users').doc(_userId).collection('saved_meals').doc(id).update({'name': newName});
+    } catch (e) {
+      AppLogger.e('MealService', 'Error updating saved meal', e);
+    }
+  }
+
+  Future<void> addFoodToSavedMeal(String id, Map<String, dynamic> food) async {
+    try {
+      final docRef = _firestore.collection('users').doc(_userId).collection('saved_meals').doc(id);
+      final doc = await docRef.get();
+      if (!doc.exists) return;
+      
+      final foods = List<Map<String, dynamic>>.from(doc.data()?['foods'] ?? []);
+      
+      final cleanFood = Map<String, dynamic>.from(food);
+      cleanFood.remove('id');
+      cleanFood.remove('createdAt');
+      
+      foods.add(cleanFood);
+      await docRef.update({'foods': foods});
+    } catch (e) {
+      AppLogger.e('MealService', 'Error adding food to saved meal', e);
+    }
+  }
+
+  Future<void> deleteFoodFromSavedMeal(String id, int index) async {
+    try {
+      final docRef = _firestore.collection('users').doc(_userId).collection('saved_meals').doc(id);
+      final doc = await docRef.get();
+      if (!doc.exists) return;
+      
+      final foods = List<Map<String, dynamic>>.from(doc.data()?['foods'] ?? []);
+      if (index >= 0 && index < foods.length) {
+        foods.removeAt(index);
+        await docRef.update({'foods': foods});
+      }
+    } catch (e) {
+      AppLogger.e('MealService', 'Error deleting food from saved meal', e);
+    }
+  }
+
+  Stream<List<Map<String, dynamic>>> getSavedMealsStream() {
+    return _firestore.collection('users').doc(_userId).collection('saved_meals').orderBy('createdAt', descending: true).snapshots().map((snapshot) => snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            'id': doc.id,
+            'name': data['name'] ?? 'Unnamed Meal',
+            'foods': (data['foods'] as List<dynamic>?)?.map((f) {
+              final fMap = f as Map<String, dynamic>;
+              return {
+                'name': fMap['name'] ?? '',
+                'calories': (fMap['calories'] as num?)?.toDouble() ?? 0.0,
+                'amount': (fMap['amount'] as num?)?.toDouble() ?? 0.0,
+                'unit': fMap['unit'] ?? 'g',
+                'protein': (fMap['protein'] as num?)?.toDouble() ?? 0.0,
+                'carbs': (fMap['carbs'] as num?)?.toDouble() ?? 0.0,
+                'fat': (fMap['fat'] as num?)?.toDouble() ?? 0.0,
+              };
+            }).toList() ?? [],
+          };
+        }).toList());
+  }
+
+  Future<void> deleteSavedMeal(String id) async {
+    try {
+      await _firestore.collection('users').doc(_userId).collection('saved_meals').doc(id).delete();
+    } catch (e) {
+      AppLogger.e('MealService', 'Error deleting saved meal', e);
     }
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 class FoodItemCard extends StatelessWidget {
   final String name;
   final double calories;
+  final double? amount;
+  final String? unit;
   final String? category;
   final VoidCallback onTap;
 
@@ -10,6 +12,8 @@ class FoodItemCard extends StatelessWidget {
     super.key,
     required this.name,
     required this.calories,
+    this.amount,
+    this.unit,
     this.category,
     required this.onTap,
   });
@@ -62,13 +66,36 @@ class FoodItemCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        '${calories.toStringAsFixed(0)} cal',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w400,
-                        ),
+                      Row(
+                        children: [
+                          if (amount != null && unit != null) ...[
+                            Text(
+                              '${amount!.toStringAsFixed(0)} $unit',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                          Text(
+                            '${calories.toStringAsFixed(0)} cal',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                       ),
                       if (category != null) ...[
                         const SizedBox(height: 4),

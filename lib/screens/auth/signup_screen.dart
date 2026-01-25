@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import '../../widgets/input_field.dart';
 import '../../widgets/primary_button.dart';
 import '../../core/firestore_helper.dart';
@@ -26,33 +27,33 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
+  String? _validateEmail(String? value, AppLocalizations t) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return t.emailRequired;
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email';
+      return t.enterValidEmail;
     }
     return null;
   }
 
-  String? _validatePassword(String? value) {
+  String? _validatePassword(String? value, AppLocalizations t) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return t.passwordRequired;
     }
     if (value.length < 6) {
-      return 'Password must be at least 6 characters';
+      return t.passwordMinLength;
     }
     return null;
   }
 
-  String? _validateConfirmPassword(String? value) {
+  String? _validateConfirmPassword(String? value, AppLocalizations t) {
     if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
+      return t.pleaseConfirmPassword;
     }
     if (value != _passwordController.text) {
-      return 'Passwords do not match';
+      return t.passwordsDoNotMatch;
     }
     return null;
   }
@@ -83,32 +84,34 @@ class _SignupScreenState extends State<SignupScreen> {
       // Navigation is handled automatically by AuthWrapper
       // User will be redirected to ProfileSetupScreen
       if (mounted) {
+        final t = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created successfully!'),
+          SnackBar(
+            content: Text(t.accountCreatedSuccessfully),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 1),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
     } on FirebaseAuthException catch (e) {
-      String errorMessage = 'An error occurred';
+      final t = AppLocalizations.of(context)!;
+      String errorMessage = t.anErrorOccurred;
 
       switch (e.code) {
         case 'email-already-in-use':
-          errorMessage = 'This email is already registered';
+          errorMessage = t.thisEmailAlreadyRegistered;
           break;
         case 'invalid-email':
-          errorMessage = 'Invalid email address';
+          errorMessage = t.invalidEmailAddress;
           break;
         case 'operation-not-allowed':
-          errorMessage = 'Email/password accounts are not enabled';
+          errorMessage = t.emailPasswordNotEnabled;
           break;
         case 'weak-password':
-          errorMessage = 'Password is too weak';
+          errorMessage = t.passwordTooWeak;
           break;
         default:
-          errorMessage = e.message ?? 'An error occurred';
+          errorMessage = e.message ?? t.anErrorOccurred;
       }
 
       if (mounted) {
@@ -157,80 +160,90 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A1A),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Sign up to get started',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                InputField(
-                  hintText: 'Email',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
-                  textInputAction: TextInputAction.next,
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  validator: _validateEmail,
-                ),
-                const SizedBox(height: 16),
-                InputField(
-                  hintText: 'Password',
-                  controller: _passwordController,
-                  obscureText: true,
-                  prefixIcon: const Icon(Icons.lock_outlined),
-                  validator: _validatePassword,
-                ),
-                const SizedBox(height: 16),
-                InputField(
-                  hintText: 'Confirm Password',
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                  prefixIcon: const Icon(Icons.lock_outlined),
-                  validator: _validateConfirmPassword,
-                ),
-                const SizedBox(height: 32),
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : PrimaryButton(
-                        text: 'Create Account',
-                        onPressed: _createAccount,
-                      ),
-                const SizedBox(height: 24),
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Already have an account? ',
-                        style: TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 14,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                Builder(
+                  builder: (context) {
+                    final t = AppLocalizations.of(context)!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t.createAccount,
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1A1A),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 8),
+                        Text(
+                          t.signUpToGetStarted,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        InputField(
+                          hintText: t.email,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          textInputAction: TextInputAction.next,
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          validator: (value) => _validateEmail(value, t),
+                        ),
+                        const SizedBox(height: 16),
+                        InputField(
+                          hintText: t.password,
+                          controller: _passwordController,
+                          obscureText: true,
+                          prefixIcon: const Icon(Icons.lock_outlined),
+                          validator: (value) => _validatePassword(value, t),
+                        ),
+                        const SizedBox(height: 16),
+                        InputField(
+                          hintText: t.confirmPassword,
+                          controller: _confirmPasswordController,
+                          obscureText: true,
+                          prefixIcon: const Icon(Icons.lock_outlined),
+                          validator: (value) => _validateConfirmPassword(value, t),
+                        ),
+                        const SizedBox(height: 32),
+                        _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : PrimaryButton(
+                                text: t.createAccount,
+                                onPressed: _createAccount,
+                              ),
+                        const SizedBox(height: 24),
+                        Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                t.alreadyHaveAccount,
+                                style: const TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: Text(
+                                  t.login,
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

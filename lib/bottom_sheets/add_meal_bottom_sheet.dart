@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 
 /// Bottom sheet for adding a custom meal.
@@ -21,6 +22,29 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
   final MealService _mealService = MealService();
   final TextEditingController _customMealController = TextEditingController();
   bool _isLoading = false;
+  
+  // Track which system meals are currently missing from the day's view
+  // This would ideally be passed in, but we can fetch it or just allow "restoring" blindly
+  // For better UX, let's fetch current meals to know what to show as "addable"
+  List<String> _existingMealNames = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingMeals();
+  }
+
+  Future<void> _loadExistingMeals() async {
+    final today = _mealService.getTodayDate();
+    // We need a one-time fetch to see what's currently on the screen
+    // getDayMealsStream is a stream, so we can take the first element
+    final meals = await _mealService.getDayMealsStream(today).first;
+    if (mounted) {
+      setState(() {
+        _existingMealNames = meals.map((m) => m['name'] as String).toList();
+      });
+    }
+  }
 
   /// Handle custom meal creation
   ///
@@ -30,11 +54,12 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
 
     final mealName = _customMealController.text.trim();
 
+    final t = AppLocalizations.of(context)!;
     // Guard: Prevent creating meals without a name
     if (mealName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a meal name'),
+        SnackBar(
+          content: Text(t.pleaseEnterMealName),
           backgroundColor: Colors.orange,
         ),
       );
@@ -53,9 +78,10 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
         if (mealId != null) {
           Navigator.of(context).pop(mealId);
         } else {
+          final t = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to create meal. Please try again.'),
+            SnackBar(
+              content: Text(t.failedToCreateMeal),
               backgroundColor: Colors.red,
             ),
           );
@@ -66,10 +92,10 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
       }
     } catch (e) {
       if (mounted) {
-        String errorMessage = 'Failed to create meal';
+        final t = AppLocalizations.of(context)!;
+        String errorMessage = t.failedToCreateMeal;
         if (e.toString().contains('system meal name')) {
-          errorMessage =
-              'This meal name is reserved. Please choose a different name.';
+          errorMessage = t.mealNameReserved;
         } else {
           errorMessage = e.toString();
         }
@@ -87,24 +113,37 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
     }
   }
 
-  /// Get icon for system meal type
-  IconData _getMealIcon(String mealName) {
-    switch (mealName) {
-      case 'Breakfast':
-        return Icons.breakfast_dining;
-      case 'Lunch':
-        return Icons.lunch_dining;
-      case 'Dinner':
-        return Icons.dinner_dining;
-      case 'Snack':
-        return Icons.cookie;
-      default:
-        return Icons.restaurant;
+  Future<void> _restoreSystemMeal(String mealName) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    
+    try {
+      final today = _mealService.getTodayDate();
+      await _mealService.restoreSystemMeal(today, mealName);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      print('Error restoring meal: $e');
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Get icon for system meal type
+  IconData _getMealIcon(String mealName, AppLocalizations t) {
+    if (mealName == t.breakfast || mealName == 'Breakfast') {
+      return Icons.breakfast_dining;
+    } else if (mealName == t.lunch || mealName == 'Lunch') {
+      return Icons.lunch_dining;
+    } else if (mealName == t.dinner || mealName == 'Dinner') {
+      return Icons.dinner_dining;
+    } else if (mealName == t.snack || mealName == 'Snack') {
+      return Icons.cookie;
+    }
+    return Icons.restaurant;
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.7,
@@ -142,9 +181,9 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Add Meal',
-                  style: TextStyle(
+                Text(
+                  t.addMeal,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF1A1A1A),
@@ -178,11 +217,11 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Section 1: System Meals (always exist, disabled)
+                  // Section 1: System Meals (Restore deleted ones)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
                     child: Text(
-                      'System Meals',
+                      t.systemMeals,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -192,34 +231,53 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                     ),
                   ),
                   ...MealService.systemMealNames.map((mealName) {
+                    // Map system meal names to localized strings
+                    String displayName = mealName;
+                    if (mealName == 'Breakfast') displayName = t.breakfast;
+                    else if (mealName == 'Lunch') displayName = t.lunch;
+                    else if (mealName == 'Dinner') displayName = t.dinner;
+                    
+                    final isPresent = _existingMealNames.contains(mealName);
+                    
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _getMealIcon(mealName),
-                              color: Colors.grey[400],
-                              size: 22,
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                mealName,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.grey[600],
+                      child: InkWell(
+                        onTap: isPresent ? null : () => _restoreSystemMeal(mealName),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getMealIcon(mealName, t),
+                                color: isPresent ? Colors.grey[300] : const Color(0xFF4A90E2),
+                                size: 22,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  displayName,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    color: isPresent ? Colors.grey[400] : const Color(0xFF1A1A1A),
+                                  ),
                                 ),
                               ),
-                            ),
-                            Icon(
-                              Icons.check_circle_outline,
-                              color: Colors.grey[300],
-                              size: 20,
-                            ),
-                          ],
+                              if (isPresent)
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.grey[300],
+                                  size: 20,
+                                )
+                              else
+                                const Icon(
+                                  Icons.add_circle_outline,
+                                  color: Color(0xFF4A90E2),
+                                  size: 20,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -238,7 +296,7 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Custom Meal',
+                          t.customMeal,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -251,7 +309,7 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                           controller: _customMealController,
                           enabled: !_isLoading,
                           decoration: InputDecoration(
-                            hintText: 'Enter meal name (e.g. "Pre-workout")',
+                            hintText: t.enterMealNameExample,
                             hintStyle: TextStyle(
                               color: Colors.grey[400],
                               fontWeight: FontWeight.w400,
@@ -298,9 +356,9 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
                                                   Colors.white),
                                         ),
                                       )
-                                    : const Text(
-                                        'Add Meal',
-                                        style: TextStyle(
+                                    : Text(
+                                        t.addMeal,
+                                        style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
                                           color: Colors.white,

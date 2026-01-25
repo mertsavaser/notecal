@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 
 /// Bottom sheet for food item actions (edit amount, change serving, remove).
@@ -77,9 +78,10 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
         if (success) {
           Navigator.of(context).pop(true);
         } else {
+          final t = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to update food item'),
+            SnackBar(
+              content: Text(t.failedToUpdateFood),
               backgroundColor: Colors.red,
             ),
           );
@@ -104,15 +106,16 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
   }
 
   Future<void> _removeFood() async {
+    final t = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
-        title: const Text(
-          'Remove Food',
-          style: TextStyle(
+        title: Text(
+          t.removeFood,
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w500,
             color: Color(0xFF1A1A1A),
@@ -120,7 +123,7 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
           ),
         ),
         content: Text(
-          'Remove "${widget.food['name']}" from this meal?',
+          t.removeFoodConfirmation(widget.food['name'] ?? ''),
           style: TextStyle(
             fontSize: 15,
             color: Colors.grey[700],
@@ -135,7 +138,7 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
             child: Text(
-              'Cancel',
+              t.cancel,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
@@ -152,9 +155,9 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: const Text(
-                  'Remove',
-                  style: TextStyle(
+                child: Text(
+                  t.removeFromMeal,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
@@ -183,9 +186,10 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
       if (mounted) {
         Navigator.of(context).pop(success ? 'deleted' : null);
         if (!success) {
+          final t = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to remove food item'),
+            SnackBar(
+              content: Text(t.failedToRemoveFood),
               backgroundColor: Colors.red,
             ),
           );
@@ -246,163 +250,177 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.food['name'] ?? 'Unknown Food',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1A1A1A),
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${((widget.food['calories'] as num?)?.toDouble() ?? 0.0).round()} cal',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Container(
-              height: 1,
-              color: Colors.grey[100],
-              margin: const EdgeInsets.symmetric(horizontal: 28),
-            ),
-            const SizedBox(height: 32),
-
-            // Amount Controls
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Amount',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(20),
+                  Builder(
+                    builder: (context) {
+                      final t = AppLocalizations.of(context)!;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.food['name'] ?? t.unknownFood,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF1A1A1A),
+                              letterSpacing: -0.5,
+                            ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: _decrementAmount,
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(20),
-                                    bottomLeft: Radius.circular(20),
-                                  ),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(14),
-                                    child: Icon(Icons.remove,
-                                        color: Colors.grey[600], size: 20),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: TextField(
-                                  controller: _amountController,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                          decimal: true),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'^\d+\.?\d{0,2}')),
-                                  ],
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF1A1A1A),
-                                  ),
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    contentPadding:
-                                        EdgeInsets.symmetric(vertical: 12),
-                                  ),
-                                  onChanged: (value) {
-                                    final parsed = double.tryParse(value);
-                                    if (parsed != null) {
-                                      setState(() {
-                                        _amount = parsed.clamp(0.0, 10000.0);
-                                      });
-                                    }
-                                  },
-                                ),
-                              ),
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: _incrementAmount,
-                                  borderRadius: const BorderRadius.only(
-                                    topRight: Radius.circular(20),
-                                    bottomRight: Radius.circular(20),
-                                  ),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(14),
-                                    child: Icon(Icons.add,
-                                        color: Colors.grey[600], size: 20),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 8),
+                          Text(
+                            '${((widget.food['calories'] as num?)?.toDouble() ?? 0.0).round()} ${t.cal}',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: DropdownButton<String>(
-                          value: _selectedServingUnit,
-                          underline: const SizedBox(),
-                          icon: Icon(Icons.keyboard_arrow_down,
-                              color: Colors.grey[500], size: 22),
-                          items: _servingUnits.map((String unit) {
-                            return DropdownMenuItem<String>(
-                              value: unit,
-                              child: Text(
-                                unit,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF1A1A1A),
-                                  fontWeight: FontWeight.w400,
-                                ),
+                        ],
+                      );
+                    },
+                  ),
+                  Container(
+                    height: 1,
+                    color: Colors.grey[100],
+                    margin: const EdgeInsets.symmetric(horizontal: 28),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Amount Controls
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Builder(
+                          builder: (context) {
+                            final t = AppLocalizations.of(context)!;
+                            return Text(
+                              t.amount,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[600],
+                                letterSpacing: 0.2,
                               ),
                             );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                _selectedServingUnit = newValue;
-                              });
-                            }
                           },
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _decrementAmount,
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(20),
+                                          bottomLeft: Radius.circular(20),
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(14),
+                                          child: Icon(Icons.remove,
+                                              color: Colors.grey[600], size: 20),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _amountController,
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                                decimal: true),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.allow(
+                                              RegExp(r'^\d+\.?\d{0,2}')),
+                                        ],
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF1A1A1A),
+                                        ),
+                                        decoration: const InputDecoration(
+                                          border: InputBorder.none,
+                                          contentPadding:
+                                              EdgeInsets.symmetric(vertical: 12),
+                                        ),
+                                        onChanged: (value) {
+                                          final parsed = double.tryParse(value);
+                                          if (parsed != null) {
+                                            setState(() {
+                                              _amount = parsed.clamp(0.0, 10000.0);
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _incrementAmount,
+                                        borderRadius: const BorderRadius.only(
+                                          topRight: Radius.circular(20),
+                                          bottomRight: Radius.circular(20),
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(14),
+                                          child: Icon(Icons.add,
+                                              color: Colors.grey[600], size: 20),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: DropdownButton<String>(
+                                value: _selectedServingUnit,
+                                underline: const SizedBox(),
+                                icon: Icon(Icons.keyboard_arrow_down,
+                                    color: Colors.grey[500], size: 22),
+                                items: _servingUnits.map((String unit) {
+                                  return DropdownMenuItem<String>(
+                                    value: unit,
+                                    child: Text(
+                                      unit,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Color(0xFF1A1A1A),
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _selectedServingUnit = newValue;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -434,14 +452,19 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                                     AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text(
-                              'Save Changes',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                letterSpacing: 0.2,
-                              ),
+                          : Builder(
+                              builder: (context) {
+                                final t = AppLocalizations.of(context)!;
+                                return Text(
+                                  t.saveChanges,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                );
+                              },
                             ),
                     ),
                   ),
@@ -462,14 +485,19 @@ class _FoodActionBottomSheetState extends State<FoodActionBottomSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       alignment: Alignment.center,
-                      child: Text(
-                        'Remove from Meal',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFFE63946),
-                          letterSpacing: 0.2,
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          final t = AppLocalizations.of(context)!;
+                          return Text(
+                            t.removeFromMeal,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFFE63946),
+                              letterSpacing: 0.2,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),

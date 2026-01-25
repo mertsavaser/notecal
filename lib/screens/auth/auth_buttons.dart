@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 
 class GoogleAuthButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const GoogleAuthButton({
     super.key,
-    required this.onPressed,
+    this.onPressed,
   });
 
   @override
@@ -35,13 +36,18 @@ class GoogleAuthButton extends StatelessWidget {
               },
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Continue with Google',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A1A),
-              ),
+            Builder(
+              builder: (context) {
+                final t = AppLocalizations.of(context)!;
+                return Text(
+                  t.continueWithGoogle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -51,11 +57,11 @@ class GoogleAuthButton extends StatelessWidget {
 }
 
 class AppleAuthButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const AppleAuthButton({
     super.key,
-    required this.onPressed,
+    this.onPressed,
   });
 
   @override
@@ -77,22 +83,27 @@ class AppleAuthButton extends StatelessWidget {
           ),
           backgroundColor: Colors.white,
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.apple,
               size: 24,
               color: Color(0xFF1A1A1A),
             ),
-            SizedBox(width: 12),
-            Text(
-              'Continue with Apple',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A1A),
-              ),
+            const SizedBox(width: 12),
+            Builder(
+              builder: (context) {
+                final t = AppLocalizations.of(context);
+                return Text(
+                  t?.appleSignIn ?? 'Apple ile giriş',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                );
+              },
             ),
           ],
         ),

@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:notecal/core/firestore_helper.dart';
+import 'package:notecal/models/user_profile.dart';
+import 'package:notecal/services/target_calculator.dart';
 
 /// Edit Profile screen for editing body information and recalculating calories.
-///
-/// Contains editable inputs for:
-/// - Weight, Height, Age
-/// - Gender (segmented control)
-/// - Activity Level (dropdown)
-///
-/// Actions:
-/// - "Recalculate Daily Calories" button (primary)
-/// - "Cancel" button (secondary)
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -24,21 +18,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
   final _ageController = TextEditingController();
+  
+  // Manual targets controllers
+  final _caloriesController = TextEditingController();
+  final _proteinController = TextEditingController();
+  final _carbsController = TextEditingController();
+  final _fatController = TextEditingController();
 
   String _selectedGender = 'Male';
   String _selectedActivityLevel = 'Sedentary (little or no exercise)';
-  bool _isRecalculating = false;
+  UserGoal _selectedGoal = UserGoal.maintain;
+  TargetsMode _targetsMode = TargetsMode.auto;
+  
+  bool _isSaving = false;
   bool _isLoadingProfile = true;
 
   final List<String> _genderOptions = ['Male', 'Female'];
-
-  final Map<String, double> _activityFactors = {
-    'Sedentary (little or no exercise)': 1.2,
-    'Lightly active (1–3 days/week)': 1.375,
-    'Moderately active (3–5 days/week)': 1.55,
-    'Very active (6–7 days/week)': 1.725,
-    'Athlete / super active': 1.9,
-  };
 
   final Map<String, String> _activityLevelKeys = {
     'Sedentary (little or no exercise)': 'sedentary',
@@ -59,6 +54,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _weightController.dispose();
     _heightController.dispose();
     _ageController.dispose();
+    _caloriesController.dispose();
+    _proteinController.dispose();
+    _carbsController.dispose();
+    _fatController.dispose();
     super.dispose();
   }
 
@@ -68,29 +67,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (user == null) return;
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final profile = await FirestoreHelper.getUserProfile(user.uid);
 
-      if (doc.exists && mounted) {
-        final data = doc.data();
-        if (data != null) {
-          setState(() {
-            _weightController.text = (data['weight'] as num?)?.toString() ?? '';
-            _heightController.text = (data['height'] as num?)?.toString() ?? '';
-            _ageController.text = (data['age'] as num?)?.toString() ?? '';
-            final genderStr = data['gender'] ?? 'male';
-            final genderString = genderStr as String;
-            _selectedGender = genderString.isEmpty
-                ? 'Male'
-                : '${genderString[0].toUpperCase()}${genderString.substring(1).toLowerCase()}';
-            _selectedActivityLevel = _getActivityLevelDisplayName(
-              data['activityLevel'] as String? ?? 'sedentary',
-            );
-            _isLoadingProfile = false;
-          });
-        }
+      if (profile != null && mounted) {
+        setState(() {
+          _weightController.text = (profile.weight ?? '').toString();
+          _heightController.text = (profile.height ?? '').toString();
+          _ageController.text = (profile.age ?? '').toString();
+          
+          final genderStr = profile.gender ?? 'male';
+          _selectedGender = genderStr.isEmpty
+              ? 'Male'
+              : '${genderStr[0].toUpperCase()}${genderStr.substring(1).toLowerCase()}';
+          
+          _selectedActivityLevel = _getActivityLevelDisplayName(
+            profile.activityLevel ?? 'sedentary',
+          );
+          
+          _selectedGoal = profile.goal;
+          _targetsMode = profile.targetsMode;
+          
+          if (profile.manualTargets != null) {
+            _caloriesController.text = profile.manualTargets!.calories.toString();
+            _proteinController.text = profile.manualTargets!.protein.toString();
+            _carbsController.text = profile.manualTargets!.carbs.toString();
+            _fatController.text = profile.manualTargets!.fat.toString();
+          } else {
+            // Default values
+            _caloriesController.text = '2000';
+            _proteinController.text = '150';
+            _carbsController.text = '200';
+            _fatController.text = '65';
+          }
+          
+          _isLoadingProfile = false;
+        });
       } else {
         setState(() {
           _isLoadingProfile = false;
@@ -116,24 +127,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return 'Sedentary (little or no exercise)';
   }
 
-  /// Calculate BMR using Mifflin-St Jeor equation
-  double _calculateBMR(
-      double weightKg, double heightCm, int age, String gender) {
-    if (gender.toLowerCase() == 'male') {
-      return 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
-    } else {
-      return 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
-    }
-  }
-
-  /// Recalculate BMR and TDEE and save to Firestore
-  Future<void> _recalculateCalories() async {
+  /// Save profile changes to Firestore
+  Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
-      _isRecalculating = true;
+      _isSaving = true;
     });
 
     try {
@@ -147,51 +148,63 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         throw Exception('Invalid input values');
       }
 
-      // Get activity factor
-      final activityFactor = _activityFactors[_selectedActivityLevel]!;
-
-      // Calculate BMR
-      final bmr = _calculateBMR(weight, height, age, gender);
-
       // Calculate TDEE
-      final tdee = bmr * activityFactor;
+      final tdee = TargetCalculator.calculateTDEE(
+        weightKg: weight,
+        heightCm: height,
+        age: age,
+        gender: gender,
+        activityLevel: activityLevel,
+      );
 
-      // Save to Firestore
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
+      // Construct manual targets if manual mode
+      MacroTargets? manualTargets;
+      if (_targetsMode == TargetsMode.manual) {
+        manualTargets = MacroTargets(
+          calories: int.tryParse(_caloriesController.text) ?? 2000,
+          protein: int.tryParse(_proteinController.text) ?? 150,
+          carbs: int.tryParse(_carbsController.text) ?? 200,
+          fat: int.tryParse(_fatController.text) ?? 65,
+        );
       }
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'weight': weight,
-        'height': height,
-        'age': age,
-        'gender': gender,
-        'activityLevel': activityLevel,
-        'bmr': bmr,
-        'tdee': tdee,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      // Use FirestoreHelper to update profile
+      // Note: We are using update which merges data
+      await FirestoreHelper.updateUserProfile(
+        user.uid,
+        username: '', // Not updating username here, helper handles merge
+        age: age,
+        gender: gender,
+        height: height,
+        weight: weight,
+        activityLevel: activityLevel,
+        goal: _selectedGoal,
+        targetsMode: _targetsMode,
+        manualTargets: manualTargets,
+        tdee: tdee,
+      );
 
       if (mounted) {
         setState(() {
-          _isRecalculating = false;
+          _isSaving = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Daily calories recalculated successfully'),
+            content: Text('Profile updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
 
-        // Pop back to profile screen with success flag
         Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isRecalculating = false;
+          _isSaving = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -205,44 +218,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   String? _validateWeight(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Weight is required';
-    }
+    if (value == null || value.trim().isEmpty) return 'Required';
     final weight = double.tryParse(value);
-    if (weight == null) {
-      return 'Please enter a valid number';
-    }
-    if (weight <= 0 || weight > 500) {
-      return 'Please enter a valid weight (kg)';
-    }
+    if (weight == null || weight <= 0) return 'Invalid';
     return null;
   }
 
   String? _validateHeight(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Height is required';
-    }
+    if (value == null || value.trim().isEmpty) return 'Required';
     final height = double.tryParse(value);
-    if (height == null) {
-      return 'Please enter a valid number';
-    }
-    if (height <= 0 || height > 300) {
-      return 'Please enter a valid height (cm)';
-    }
+    if (height == null || height <= 0) return 'Invalid';
     return null;
   }
 
   String? _validateAge(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Age is required';
-    }
+    if (value == null || value.trim().isEmpty) return 'Required';
     final age = int.tryParse(value);
-    if (age == null) {
-      return 'Please enter a valid number';
-    }
-    if (age <= 10 || age >= 100) {
-      return 'Age must be between 11 and 99';
-    }
+    if (age == null || age <= 0 || age > 120) return 'Invalid';
     return null;
   }
 
@@ -251,19 +243,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_isLoadingProfile) {
       return Scaffold(
         backgroundColor: const Color(0xFFFAFAFA),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.close, color: Colors.grey[700], size: 24),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
+        appBar: AppBar(backgroundColor: Colors.white, elevation: 0),
         body: const Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
-          ),
+          child: CircularProgressIndicator(color: Colors.blue),
         ),
       );
     }
@@ -283,7 +265,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             color: Color(0xFF1A1A1A),
             fontSize: 20,
             fontWeight: FontWeight.w500,
-            letterSpacing: -0.3,
           ),
         ),
       ),
@@ -295,23 +276,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Body Information Section
-                const Text(
-                  'Body Information',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF1A1A1A),
-                    letterSpacing: -0.3,
-                  ),
-                ),
+                _buildSectionTitle('Body Information'),
                 const SizedBox(height: 20),
                 _buildInputField(
                   controller: _weightController,
                   label: 'Weight (kg)',
                   validator: _validateWeight,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.monitor_weight_outlined,
                 ),
                 const SizedBox(height: 20),
@@ -319,8 +290,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: _heightController,
                   label: 'Height (cm)',
                   validator: _validateHeight,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.height_outlined,
                 ),
                 const SizedBox(height: 20),
@@ -335,25 +305,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 _buildGenderSelector(),
                 const SizedBox(height: 32),
 
-                // Activity Level Section
-                const Text(
-                  'Activity Level',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF1A1A1A),
-                    letterSpacing: -0.3,
-                  ),
-                ),
+                _buildSectionTitle('Activity Level'),
                 const SizedBox(height: 20),
                 _buildActivityLevelDropdown(),
+                const SizedBox(height: 32),
+                
+                _buildSectionTitle('Goal & Targets'),
+                const SizedBox(height: 20),
+                _buildGoalSelector(),
+                const SizedBox(height: 20),
+                _buildTargetsSection(),
                 const SizedBox(height: 40),
 
                 // Action Buttons
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isRecalculating ? null : _recalculateCalories,
+                    onPressed: _isSaving ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -361,18 +329,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: _isRecalculating
+                    child: _isSaving
                         ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : const Text(
-                            'Recalculate Daily Calories',
+                            'Save Changes',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -381,35 +348,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _isRecalculating
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      side: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF1A1A1A),
+        letterSpacing: -0.3,
       ),
     );
   }
@@ -425,27 +379,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
-      style: const TextStyle(
-        fontSize: 16,
-        color: Color(0xFF1A1A1A),
-        fontWeight: FontWeight.w400,
-      ),
+      style: const TextStyle(fontSize: 16, color: Color(0xFF1A1A1A)),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(
-          color: Colors.grey[600],
-          fontWeight: FontWeight.w400,
-        ),
-        prefixIcon:
-            icon != null ? Icon(icon, color: Colors.grey[500], size: 22) : null,
+        labelStyle: TextStyle(color: Colors.grey[600]),
+        prefixIcon: icon != null ? Icon(icon, color: Colors.grey[500], size: 22) : null,
         filled: true,
         fillColor: Colors.grey[50],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
     );
   }
@@ -496,33 +440,182 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey[300]!),
       ),
-      child: DropdownButton<String>(
-        value: _selectedActivityLevel,
-        isExpanded: true,
-        underline: const SizedBox(),
-        icon:
-            Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 22),
-        items: _activityFactors.keys.map((level) {
-          return DropdownMenuItem<String>(
-            value: level,
-            child: Text(
-              level,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF1A1A1A),
-                fontWeight: FontWeight.w400,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedActivityLevel,
+          isExpanded: true,
+          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+          items: _activityLevelKeys.keys.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(
+                value,
+                style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),
+              ),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            if (newValue != null) {
+              setState(() {
+                _selectedActivityLevel = newValue;
+              });
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        children: UserGoal.values.map((goal) {
+          final isSelected = _selectedGoal == goal;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedGoal = goal;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.blue : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  goal.name[0].toUpperCase() + goal.name.substring(1),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? Colors.white : Colors.black87,
+                  ),
+                ),
               ),
             ),
           );
         }).toList(),
-        onChanged: (String? newValue) {
-          if (newValue != null) {
-            setState(() {
-              _selectedActivityLevel = newValue;
-            });
-          }
-        },
+      ),
+    );
+  }
+
+  Widget _buildTargetsSection() {
+    // Calculate preview targets
+    final age = int.tryParse(_ageController.text) ?? 25;
+    final height = double.tryParse(_heightController.text) ?? 170;
+    final weight = double.tryParse(_weightController.text) ?? 70;
+    final gender = _selectedGender.toLowerCase();
+    final activityLevel = _activityLevelKeys[_selectedActivityLevel] ?? 'sedentary';
+
+    final tempProfile = UserProfile(
+      uid: 'temp',
+      email: '',
+      age: age,
+      height: height,
+      weight: weight,
+      gender: gender,
+      activityLevel: activityLevel,
+      goal: _selectedGoal,
+      targetsMode: _targetsMode,
+      manualTargets: _targetsMode == TargetsMode.manual ? MacroTargets(
+        calories: int.tryParse(_caloriesController.text) ?? 0,
+        protein: int.tryParse(_proteinController.text) ?? 0,
+        carbs: int.tryParse(_carbsController.text) ?? 0,
+        fat: int.tryParse(_fatController.text) ?? 0,
+      ) : null,
+    );
+
+    final previewTargets = TargetCalculator.calculateTargets(tempProfile);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildModeButton(TargetsMode.auto, 'Auto')),
+            const SizedBox(width: 12),
+            Expanded(child: _buildModeButton(TargetsMode.manual, 'Manual')),
+          ],
+        ),
+        const SizedBox(height: 20),
+        if (_targetsMode == TargetsMode.auto) ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Calories', style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text('${previewTargets.calories}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('P: ${previewTargets.protein}g', style: const TextStyle(color: Colors.grey)),
+                    Text('C: ${previewTargets.carbs}g', style: const TextStyle(color: Colors.grey)),
+                    Text('F: ${previewTargets.fat}g', style: const TextStyle(color: Colors.grey)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          _buildInputField(
+            controller: _caloriesController,
+            label: 'Target Calories',
+            validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildInputField(controller: _proteinController, label: 'Protein (g)', validator: null, keyboardType: TextInputType.number)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildInputField(controller: _carbsController, label: 'Carbs (g)', validator: null, keyboardType: TextInputType.number)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildInputField(controller: _fatController, label: 'Fat (g)', validator: null, keyboardType: TextInputType.number)),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildModeButton(TargetsMode mode, String label) {
+    final isSelected = _targetsMode == mode;
+    return GestureDetector(
+      onTap: () => setState(() => _targetsMode = mode),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? Colors.blue : Colors.grey[300]!),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[600],
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

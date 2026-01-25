@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import 'app.dart';
 
 void main() async {
@@ -25,9 +26,14 @@ void main() async {
           children: [
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            const Text(
-              'Bir hata oluştu',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Builder(
+              builder: (context) {
+                final t = AppLocalizations.of(context);
+                return Text(
+                  t?.anErrorOccurredTurkish ?? 'An error occurred',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                );
+              },
             ),
             const SizedBox(height: 8),
             Padding(
@@ -45,15 +51,21 @@ void main() async {
   };
 
   // Initialize Firebase and wait for completion
+  // CRITICAL: App cannot run without Firebase
   try {
     final app = await Firebase.initializeApp();
-    print('[INIT] Firebase initialized');
+    print('[INIT] Firebase initialized successfully');
 
     // Debug: Print Firebase app options
     print('[INIT] Firebase App Name: ${app.name}');
     print('[INIT] Firebase Project ID: ${app.options.projectId}');
     print('[INIT] Firebase API Key: ${app.options.apiKey}');
     print('[INIT] Firebase App ID: ${app.options.appId}');
+
+    // Verify Firebase is actually initialized
+    if (Firebase.apps.isEmpty) {
+      throw Exception('Firebase apps list is empty after initialization');
+    }
 
     // Debug: Print Firestore instance info
     final firestore = FirebaseFirestore.instance;
@@ -72,11 +84,73 @@ void main() async {
     print('[INIT] Firebase Auth instance ready');
     print('[INIT] Current user after init: ${auth.currentUser?.uid ?? "null"}');
 
+    // All checks passed, run the app
     runApp(const NotecalApp());
   } catch (e, stackTrace) {
-    print('[INIT] Firebase initialization error: $e');
+    print('[INIT] ❌ Firebase initialization FAILED: $e');
     print('[INIT] Stack trace: $stackTrace');
-    // Still run the app even if initialization has issues
-    runApp(const NotecalApp());
+    
+    // Show error screen instead of crashing
+    runApp(
+      MaterialApp(
+        title: 'NoteCal - Setup Error',
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, 
+                    size: 64, 
+                    color: Colors.red,
+                  ),
+                  const SizedBox(height: 24),
+                  Builder(
+                    builder: (context) {
+                      final t = AppLocalizations.of(context);
+                      return Column(
+                        children: [
+                          Text(
+                            t?.firebaseConfigError ?? 'Firebase Configuration Error',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            t?.firebaseNotConfigured ?? 'Firebase is not properly configured.',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            t?.errorDetail(e.toString()) ?? 'Error: ${e.toString()}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                              fontFamily: 'monospace',
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

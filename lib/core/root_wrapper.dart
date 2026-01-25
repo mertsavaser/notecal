@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import 'auth_wrapper.dart';
 import 'onboarding_helper.dart';
@@ -81,26 +82,35 @@ class _RootWrapperState extends State<RootWrapper> {
                   const Icon(Icons.warning_amber,
                       size: 64, color: Colors.orange),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Error loading app',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    snapshot.error.toString(),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _hasInitialized = false;
-                        _onboardingCheckFuture = null;
-                        _checkOnboardingStatus();
-                      });
+                  Builder(
+                    builder: (context) {
+                      final t = AppLocalizations.of(context);
+                      return Column(
+                        children: [
+                          Text(
+                            t?.errorLoadingApp ?? 'Error loading app',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            snapshot.error.toString(),
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _hasInitialized = false;
+                                _onboardingCheckFuture = null;
+                                _checkOnboardingStatus();
+                              });
+                            },
+                            child: Text(t?.retry ?? 'Retry'),
+                          ),
+                        ],
+                      );
                     },
-                    child: const Text('Retry'),
                   ),
                 ],
               ),

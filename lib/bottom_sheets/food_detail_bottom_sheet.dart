@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 import '../widgets/macro_row.dart';
 
@@ -100,10 +101,11 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
   /// 3. StreamBuilder will automatically sync and replace optimistic data
   /// 4. If write fails, optimistic data should be rolled back (handled by parent)
   Future<void> _addToMeal() async {
+    final t = AppLocalizations.of(context)!;
     if (_amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid amount'),
+        SnackBar(
+          content: Text(t.pleaseEnterValidAmount),
           backgroundColor: Colors.red,
         ),
       );
@@ -131,16 +133,18 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
       if (mounted) {
         if (foodId != null) {
           Navigator.of(context).pop();
+          final t = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${widget.food['name']} added successfully'),
+              content: Text(t.foodAddedSuccessfully(widget.food['name'] ?? '')),
               backgroundColor: const Color(0xFF7A3EBD),
             ),
           );
         } else {
+          final t = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to add food. Please try again.'),
+            SnackBar(
+              content: Text(t.failedToAddFood),
               backgroundColor: Colors.red,
             ),
           );
@@ -210,14 +214,19 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.food['name'] ?? 'Unknown Food',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1A1A1A),
-                      letterSpacing: -0.5,
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final t = AppLocalizations.of(context)!;
+                      return Text(
+                        widget.food['name'] ?? t.unknownFood,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF1A1A1A),
+                          letterSpacing: -0.5,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
                   MacroRow(
@@ -243,14 +252,19 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Serving',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
-                      letterSpacing: 0.2,
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final t = AppLocalizations.of(context)!;
+                      return Text(
+                        t.serving,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[600],
+                          letterSpacing: 0.2,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
 
@@ -295,14 +309,19 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                   // Amount Input
                   Row(
                     children: [
-                      Text(
-                        'Amount',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[600],
-                          letterSpacing: 0.2,
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final t = AppLocalizations.of(context)!;
+                          return Text(
+                            t.amount,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[600],
+                              letterSpacing: 0.2,
+                            ),
+                          );
+                        },
                       ),
                       const Spacer(),
                       Container(
@@ -412,14 +431,19 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
                                     AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text(
-                              'Add to Meal',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                letterSpacing: 0.2,
-                              ),
+                          : Builder(
+                              builder: (context) {
+                                final t = AppLocalizations.of(context)!;
+                                return Text(
+                                  t.addToMeal,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                );
+                              },
                             ),
                     ),
                   ),

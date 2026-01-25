@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import '../../services/meal_service.dart';
 
 /// Progress screen showing weekly calorie tracking and adherence score.
@@ -57,25 +58,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
   List<String> get _weekDates => _mealService.getCurrentWeekDates();
 
   /// Format date string for display
-  String _formatDateDisplay(String dateString) {
+  String _formatDateDisplay(String dateString, AppLocalizations t) {
     final date = MealService.parseDate(dateString);
     if (date == null) return dateString;
 
-    final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final weekdays = [t.mon, t.tue, t.wed, t.thu, t.fri, t.sat, t.sun];
     final weekday = weekdays[date.weekday - 1];
     return '$weekday, ${date.month}/${date.day}';
   }
 
   /// Get motivational message based on score
-  String _getScoreMessage(double score) {
+  String _getScoreMessage(double score, AppLocalizations t) {
     if (score >= 90) {
-      return "Great consistency this week";
+      return t.greatConsistency;
     } else if (score >= 75) {
-      return "You're on track";
+      return t.onTrack;
     } else if (score >= 60) {
-      return "Making good progress";
+      return t.makingProgress;
     } else {
-      return "Every day is a fresh start";
+      return t.freshStart;
     }
   }
 
@@ -91,15 +92,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
-              return const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Center(child: CircularProgressIndicator()),
+              // FIX: Constrain height to prevent infinite size error
+              return Container(
+                height: 200, 
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: const Center(child: CircularProgressIndicator()),
               );
             }
 
+            final t = AppLocalizations.of(context)!;
             final summariesMap = snapshot.data ?? {};
             final score = _calculateWeeklyScoreSync(summariesMap);
-            final message = _getScoreMessage(score);
+            final message = _getScoreMessage(score, t);
 
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -139,14 +147,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Weekly Score',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[400],
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.3,
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final t = AppLocalizations.of(context)!;
+                      return Text(
+                        t.weeklyScore,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[400],
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.3,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -196,26 +209,30 @@ class _ProgressScreenState extends State<ProgressScreen> {
         child: Column(
           children: [
             // Header
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: Row(
-                children: [
-                  Text(
-                    'Progress',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1A1A1A),
-                      letterSpacing: -0.5,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Builder(
+                builder: (context) {
+                  final t = AppLocalizations.of(context)!;
+                  return Row(
+                    children: [
+                      Text(
+                        t.progress,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF1A1A1A),
+                          letterSpacing: -0.5,
+                          height: 1.0,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
 
-            // Weekly Score Card - Calculate from individual day streams
-            // Add error handling wrapper
+            // Weekly Score Card
             Builder(
               builder: (context) {
                 try {
@@ -224,18 +241,23 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   print(
                       '[ProgressScreen] Error building weekly score card: $e');
                   return Container(
+                    height: 200,
                     margin:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    padding: const EdgeInsets.all(20.0),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'Unable to calculate weekly score',
-                        style: TextStyle(color: Colors.grey),
-                      ),
+                    child: Builder(
+                      builder: (context) {
+                        final t = AppLocalizations.of(context)!;
+                        return Center(
+                          child: Text(
+                            t.unableToCalculateWeeklyScore,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        );
+                      },
                     ),
                   );
                 }
@@ -247,18 +269,23 @@ class _ProgressScreenState extends State<ProgressScreen> {
             // Week Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  Text(
-                    'This Week',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF1A1A1A),
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                ],
+              child: Builder(
+                builder: (context) {
+                  final t = AppLocalizations.of(context)!;
+                  return Row(
+                    children: [
+                      Text(
+                        t.thisWeek,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF1A1A1A),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
 
@@ -267,14 +294,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
             // Days List
             Expanded(
               child: _weekDates.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Text(
-                          'No week data available',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
+                  ? Builder(
+                      builder: (context) {
+                        final t = AppLocalizations.of(context)!;
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Text(
+                              t.noWeekDataAvailable,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -333,66 +365,81 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                             children: [
                                               Row(
                                                 children: [
-                                                  Text(
-                                                    _formatDateDisplay(date),
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: isToday
-                                                          ? const Color(
-                                                              0xFF4A90E2)
-                                                          : const Color(
-                                                              0xFF1A1A1A),
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                  ),
-                                                  if (isToday) ...[
-                                                    const SizedBox(width: 8),
-                                                    Container(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 3,
-                                                      ),
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(
-                                                                0xFF4A90E2)
-                                                            .withValues(
-                                                                alpha: 0.08),
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                      ),
-                                                      child: Text(
-                                                        'Today',
+                                                  Builder(
+                                                    builder: (context) {
+                                                      final t = AppLocalizations.of(context)!;
+                                                      return Text(
+                                                        _formatDateDisplay(date, t),
                                                         style: TextStyle(
-                                                          fontSize: 11,
+                                                          fontSize: 16,
                                                           fontWeight:
                                                               FontWeight.w500,
-                                                          color: const Color(
+                                                          color: isToday
+                                                              ? const Color(
                                                                   0xFF4A90E2)
-                                                              .withValues(
-                                                                  alpha: 0.8),
-                                                          letterSpacing: 0.2,
+                                                              : const Color(
+                                                                  0xFF1A1A1A),
+                                                          letterSpacing: -0.2,
                                                         ),
-                                                      ),
-                                                    ),
+                                                      );
+                                                    },
+                                                  ),
+                                                  if (isToday) ...[
+                                                  const SizedBox(width: 8),
+                                                  Builder(
+                                                    builder: (context) {
+                                                      final t = AppLocalizations.of(context)!;
+                                                      return Container(
+                                                        padding: const EdgeInsets
+                                                            .symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 3,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                                    0xFF4A90E2)
+                                                              .withValues(
+                                                                  alpha: 0.08),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                        ),
+                                                        child: Text(
+                                                          t.today,
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: const Color(
+                                                                      0xFF4A90E2)
+                                                                .withValues(
+                                                                    alpha: 0.8),
+                                                            letterSpacing: 0.2,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
                                                   ],
                                                 ],
                                               ),
                                               const SizedBox(height: 8),
-                                              Text(
-                                                calories > 0
-                                                    ? '${calories.round()} cal'
-                                                    : 'Not logged yet',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: calories > 0
-                                                      ? Colors.grey[700]
-                                                      : Colors.grey[500],
-                                                  fontWeight: FontWeight.w400,
-                                                ),
+                                              Builder(
+                                                builder: (context) {
+                                                  final t = AppLocalizations.of(context)!;
+                                                  return Text(
+                                                    calories > 0
+                                                        ? '${calories.round()} ${t.cal}'
+                                                        : t.notLoggedYet,
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: calories > 0
+                                                          ? Colors.grey[700]
+                                                          : Colors.grey[500],
+                                                      fontWeight: FontWeight.w400,
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                             ],
                                           ),
@@ -499,8 +546,9 @@ class _DayDetailsBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     final mealService = MealService();
-    final dateDisplay = _formatDateDisplay(date);
+    final dateDisplay = _formatDateDisplay(date, t);
 
     return Container(
       constraints: BoxConstraints(
@@ -611,128 +659,135 @@ class _DayDetailsBottomSheet extends StatelessWidget {
                   itemCount: meals.length,
                   itemBuilder: (context, index) {
                     final meal = meals[index];
+                    final mealId = meal['id'] as String;
                     final mealName = meal['name'] as String? ?? 'Unknown';
-                    final foods =
-                        meal['foods'] as List<Map<String, dynamic>>? ?? [];
+                    
+                    // FIX: Listen to foods stream for each meal to get real data
+                    return StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: mealService.getMealFoodsStream(date, mealId),
+                      builder: (context, foodSnapshot) {
+                        final foods = foodSnapshot.data ?? [];
+                        
+                        // Calculate totals from foods
+                        double mealCalories = 0.0;
+                        for (final food in foods) {
+                          mealCalories += ((food['calories'] as num?)?.toDouble() ?? 0.0);
+                        }
 
-                    double mealCalories = 0.0;
-                    for (final food in foods) {
-                      mealCalories +=
-                          ((food['calories'] as num?)?.toDouble() ?? 0.0);
-                    }
+                        final hasNoCalories = mealCalories == 0.0;
 
-                    final hasNoCalories = mealCalories == 0.0;
-
-                    return Opacity(
-                      opacity: hasNoCalories ? 0.5 : 1.0,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Container(
-                          padding: const EdgeInsets.all(20.0),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                        return Opacity(
+                          opacity: hasNoCalories ? 0.5 : 1.0,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: Container(
+                              padding: const EdgeInsets.all(20.0),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    mealName,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF1A1A1A).withValues(
-                                          alpha: hasNoCalories ? 0.6 : 1.0),
-                                      letterSpacing: -0.2,
-                                    ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        mealName,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w500,
+                                          color: const Color(0xFF1A1A1A).withValues(
+                                              alpha: hasNoCalories ? 0.6 : 1.0),
+                                          letterSpacing: -0.2,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${mealCalories.round()}',
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w500,
+                                          color: (Colors.grey[700] ?? Colors.grey)
+                                              .withValues(
+                                                  alpha: hasNoCalories ? 0.5 : 1.0),
+                                        ),
+                                      ),
+                                      Text(
+                                        ' cal',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          color: (Colors.grey[600] ?? Colors.grey)
+                                              .withValues(
+                                                  alpha: hasNoCalories ? 0.5 : 1.0),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    '${mealCalories.round()}',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w500,
-                                      color: (Colors.grey[700] ?? Colors.grey)
-                                          .withValues(
-                                              alpha: hasNoCalories ? 0.5 : 1.0),
-                                    ),
-                                  ),
-                                  Text(
-                                    ' cal',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                      color: (Colors.grey[600] ?? Colors.grey)
-                                          .withValues(
-                                              alpha: hasNoCalories ? 0.5 : 1.0),
-                                    ),
-                                  ),
+                                  if (foods.isNotEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    ...foods.map((food) {
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 10.0),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                food['name'] ?? 'Unknown',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  color: (Colors.grey[700] ??
+                                                          Colors.grey)
+                                                      .withValues(
+                                                          alpha: hasNoCalories
+                                                              ? 0.5
+                                                              : 0.8),
+                                                  fontWeight: FontWeight.w400,
+                                                  height: 1.4,
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              '${((food['calories'] as num?)?.toDouble() ?? 0.0).round()}',
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w500,
+                                                color: (Colors.grey[700] ??
+                                                        Colors.grey)
+                                                    .withValues(
+                                                        alpha: hasNoCalories
+                                                            ? 0.4
+                                                            : 0.7),
+                                              ),
+                                            ),
+                                            Text(
+                                              ' cal',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w400,
+                                                color: (Colors.grey[600] ??
+                                                        Colors.grey)
+                                                    .withValues(
+                                                        alpha: hasNoCalories
+                                                            ? 0.4
+                                                            : 0.6),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                  ],
                                 ],
                               ),
-                              if (foods.isNotEmpty) ...[
-                                const SizedBox(height: 16),
-                                ...foods.map((food) {
-                                  return Padding(
-                                    padding:
-                                        const EdgeInsets.only(bottom: 10.0),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            food['name'] ?? 'Unknown',
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              color: (Colors.grey[700] ??
-                                                      Colors.grey)
-                                                  .withValues(
-                                                      alpha: hasNoCalories
-                                                          ? 0.5
-                                                          : 0.8),
-                                              fontWeight: FontWeight.w400,
-                                              height: 1.4,
-                                            ),
-                                          ),
-                                        ),
-                                        Text(
-                                          '${((food['calories'] as num?)?.toDouble() ?? 0.0).round()}',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                            color: (Colors.grey[700] ??
-                                                    Colors.grey)
-                                                .withValues(
-                                                    alpha: hasNoCalories
-                                                        ? 0.4
-                                                        : 0.7),
-                                          ),
-                                        ),
-                                        Text(
-                                          ' cal',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w400,
-                                            color: (Colors.grey[600] ??
-                                                    Colors.grey)
-                                                .withValues(
-                                                    alpha: hasNoCalories
-                                                        ? 0.4
-                                                        : 0.6),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      }
                     );
                   },
                 );
@@ -746,18 +801,18 @@ class _DayDetailsBottomSheet extends StatelessWidget {
     );
   }
 
-  String _formatDateDisplay(String dateString) {
+  String _formatDateDisplay(String dateString, AppLocalizations t) {
     final date = MealService.parseDate(dateString);
     if (date == null) return dateString;
 
     final weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday'
+      t.monday,
+      t.tuesday,
+      t.wednesday,
+      t.thursday,
+      t.friday,
+      t.saturday,
+      t.sunday
     ];
     final weekday = weekdays[date.weekday - 1];
     return '$weekday, ${date.month}/${date.day}/${date.year}';

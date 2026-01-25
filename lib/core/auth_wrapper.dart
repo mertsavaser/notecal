@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/auth/profile_setup_screen.dart';
@@ -80,9 +81,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
                 children: [
                   const Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Authentication Error',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Builder(
+                    builder: (context) {
+                      final t = AppLocalizations.of(context);
+                      return Text(
+                        t?.authenticationError ?? 'Authentication Error',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
                   Text(

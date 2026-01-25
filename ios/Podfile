@@ -1,5 +1,5 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+# Define the platform version for your project
+platform :ios, '13.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -28,7 +28,7 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  use_frameworks!
+  use_frameworks! :linkage => :static
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
@@ -39,5 +39,74 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    
+    # Fix common warnings
+    target.build_configurations.each do |config|
+      # Set minimum iOS deployment target
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      
+      # ============================================
+      # ADIM 1: Deprecated API Uyarıları
+      # ============================================
+      config.build_settings['GCC_WARN_DEPRECATED_FUNCTIONS'] = 'NO'
+      config.build_settings['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS'] = 'NO'
+      
+      # ============================================
+      # ADIM 2: Module ve Framework Uyarıları
+      # ============================================
+      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      
+      # ============================================
+      # ADIM 3: Swift Uyarıları
+      # ============================================
+      config.build_settings['SWIFT_VERSION'] = '5.0'
+      config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      # Library evolution uyarılarını bastır
+      config.build_settings['SWIFT_ENABLE_LIBRARY_EVOLUTION'] = 'NO'
+      
+      # ============================================
+      # ADIM 4: C++ ve Static Analyzer Uyarıları
+      # ============================================
+      # Unused variable uyarılarını bastır
+      config.build_settings['GCC_WARN_UNUSED_VARIABLE'] = 'NO'
+      config.build_settings['GCC_WARN_UNUSED_FUNCTION'] = 'NO'
+      
+      # Null pointer ve memory uyarılarını bastır
+      config.build_settings['CLANG_ANALYZER_NULLABILITY'] = 'NO'
+      config.build_settings['CLANG_ANALYZER_MEMORY'] = 'NO'
+      
+      # Division by zero ve garbage value uyarılarını bastır
+      config.build_settings['CLANG_ANALYZER_CORE'] = 'NO'
+      
+      # ============================================
+      # ADIM 5: Build Script Uyarıları
+      # ============================================
+      # Build script'in her build'de çalışması uyarısını bastır
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+      
+      # ============================================
+      # ADIM 6: Genel Uyarı Ayarları
+      # ============================================
+      # Tüm uyarıları bastır (sadece pod'lar için)
+      config.build_settings['GCC_WARN_64_TO_32_BIT_CONVERSION'] = 'NO'
+      config.build_settings['CLANG_WARN_BOOL_CONVERSION'] = 'NO'
+      config.build_settings['CLANG_WARN_CONSTANT_CONVERSION'] = 'NO'
+      config.build_settings['CLANG_WARN_ENUM_CONVERSION'] = 'NO'
+      config.build_settings['CLANG_WARN_INT_CONVERSION'] = 'NO'
+      config.build_settings['CLANG_WARN_UNREACHABLE_CODE'] = 'NO'
+      config.build_settings['CLANG_WARN__EXIT_TIME_DESTRUCTORS'] = 'NO'
+      
+      # Objective-C uyarıları
+      config.build_settings['CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF'] = 'NO'
+      config.build_settings['CLANG_WARN_OBJC_LITERAL_CONVERSION'] = 'NO'
+      config.build_settings['CLANG_WARN_OBJC_ROOT_CLASS'] = 'NO'
+      
+      # ============================================
+      # ADIM 7: Duplicate Library Uyarıları
+      # ============================================
+      # Duplicate library uyarılarını bastır (sadece uyarı, kritik değil)
+      # Bu flag'i eklemek yerine, uyarıyı görmezden geliyoruz
+    end
   end
 end

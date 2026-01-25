@@ -1,0 +1,292 @@
+{
+  "@@locale": "en",
+  "appTitle": "NoteCal",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "onboardingTitle1": "Log your meals effortlessly",
+  "onboardingSubtitle1": "Stay aware of what you eat with simple, fast meal tracking.",
+  "onboardingTitle2": "Know your daily intake",
+  "onboardingSubtitle2": "See your calories clearly with clean, easy-to-read visuals.",
+  "onboardingTitle3": "Stay consistent",
+  "onboardingSubtitle3": "Track progress and build healthier eating routines.",
+  "getStarted": "Get Started",
+  "next": "Next",
+  "welcomeBack": "Welcome Back",
+  "loginToContinue": "Login to continue",
+  "email": "Email",
+  "password": "Password",
+  "login": "Login",
+  "or": "or",
+  "continueWithGoogle": "Continue with Google",
+  "appleSignIn": "Apple ile giriş",
+  "dontHaveAccount": "Don't have an account? ",
+  "signUp": "Sign Up",
+  "createAccount": "Create Account",
+  "signUpToGetStarted": "Sign up to get started",
+  "confirmPassword": "Confirm Password",
+  "alreadyHaveAccount": "Already have an account? ",
+  "emailRequired": "Email is required",
+  "enterValidEmail": "Enter a valid email",
+  "passwordRequired": "Password is required",
+  "passwordMinLength": "Password must be at least 6 characters",
+  "pleaseConfirmPassword": "Please confirm your password",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "noUserFound": "No user found with this email",
+  "incorrectPassword": "Incorrect password",
+  "invalidEmailAddress": "Invalid email address",
+  "accountDisabled": "This account has been disabled",
+  "invalidEmailOrPassword": "Invalid email or password",
+  "anErrorOccurred": "An error occurred",
+  "thisEmailAlreadyRegistered": "This email is already registered",
+  "emailPasswordNotEnabled": "Email/password accounts are not enabled",
+  "passwordTooWeak": "Password is too weak",
+  "accountCreatedSuccessfully": "Account created successfully!",
+  "setUpYourProfile": "Set up your profile",
+  "tellUsAboutYourself": "Tell us about yourself to calculate your BMR",
+  "firstName": "First name",
+  "lastName": "Last name",
+  "age": "Age",
+  "height": "Height",
+  "weight": "Weight",
+  "heightCm": "Height (cm)",
+  "weightKg": "Weight (kg)",
+  "continueButton": "Continue",
+  "firstNameRequired": "First name is required",
+  "lastNameRequired": "Last name is required",
+  "ageRequired": "Age is required",
+  "pleaseEnterValidNumber": "Please enter a valid number",
+  "ageBetween11And99": "Age must be between 11 and 99",
+  "heightRequired": "Height is required",
+  "pleaseEnterValidHeight": "Please enter a valid height (cm)",
+  "weightRequired": "Weight is required",
+  "pleaseEnterValidWeight": "Please enter a valid weight (kg)",
+  "male": "Male",
+  "female": "Female",
+  "sedentary": "Sedentary (little or no exercise)",
+  "lightlyActive": "Lightly active (1–3 days/week)",
+  "moderatelyActive": "Moderately active (3–5 days/week)",
+  "veryActive": "Very active (6–7 days/week)",
+  "athlete": "Athlete / super active",
+  "breakfast": "Breakfast",
+  "lunch": "Lunch",
+  "dinner": "Dinner",
+  "snack": "Snack",
+  "home": "Home",
+  "progress": "Progress",
+  "profile": "Profile",
+  "meals": "Meals",
+  "addMeal": "Add Meal",
+  "caloriesRemaining": "calories remaining",
+  "target": "Target",
+  "consumed": "Consumed",
+  "remaining": "Remaining",
+  "protein": "Protein",
+  "carbs": "Carbs",
+  "fat": "Fat",
+  "cal": "cal",
+  "noMealsYet": "No meals yet",
+  "tapAddMealToGetStarted": "Tap \"Add Meal\" to get started",
+  "addFood": "Add food",
+  "addYourFirstFood": "Add your first food",
+  "rename": "Rename",
+  "delete": "Delete",
+  "renameMeal": "Rename Meal",
+  "enterMealName": "Enter meal name",
+  "cancel": "Cancel",
+  "save": "Save",
+  "mealNameCannotBeEmpty": "Meal name cannot be empty",
+  "failedToRenameMeal": "Failed to rename meal",
+  "mealWithThisNameExists": "A meal with this name already exists",
+  "deleteMeal": "Delete Meal",
+  "deleteMealConfirmation": "This meal contains {foodCount} food item{foodCount, plural, =0{} =1{} other{s}}. Are you sure you want to delete \"{mealName}\"?",
+  "@deleteMealConfirmation": {
+    "placeholders": {
+      "foodCount": {
+        "type": "int"
+      },
+      "mealName": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteMealConfirmationNoFood": "Are you sure you want to delete \"{mealName}\"?",
+  "@deleteMealConfirmationNoFood": {
+    "placeholders": {
+      "mealName": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteMeal": "Failed to delete meal",
+  "mealDeleted": "\"{mealName}\" deleted",
+  "@mealDeleted": {
+    "placeholders": {
+      "mealName": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSigningOut": "Error signing out: {error}",
+  "@errorSigningOut": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "systemMeals": "System Meals",
+  "customMeal": "Custom Meal",
+  "enterMealNameExample": "Enter meal name (e.g. \"Pre-workout\")",
+  "pleaseEnterMealName": "Please enter a meal name",
+  "failedToCreateMeal": "Failed to create meal. Please try again.",
+  "mealNameReserved": "This meal name is reserved. Please choose a different name.",
+  "searchFood": "Search Food",
+  "searchFoods": "Search foods...",
+  "startTypingToSearch": "Start typing to search foods",
+  "noFoodsFound": "No foods found",
+  "tryDifferentSearchTerm": "Try a different search term",
+  "serving": "Serving",
+  "amount": "Amount",
+  "addToMeal": "Add to Meal",
+  "pleaseEnterValidAmount": "Please enter a valid amount",
+  "foodAddedSuccessfully": "{foodName} added successfully",
+  "@foodAddedSuccessfully": {
+    "placeholders": {
+      "foodName": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToAddFood": "Failed to add food. Please try again.",
+  "removeFood": "Remove Food",
+  "removeFoodConfirmation": "Remove \"{foodName}\" from this meal?",
+  "@removeFoodConfirmation": {
+    "placeholders": {
+      "foodName": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFromMeal": "Remove from Meal",
+  "failedToUpdateFood": "Failed to update food item",
+  "failedToRemoveFood": "Failed to remove food item",
+  "saveChanges": "Save Changes",
+  "unknownFood": "Unknown Food",
+  "bodyInformation": "Body Information",
+  "edit": "Edit",
+  "notSet": "Not set",
+  "years": "years",
+  "nutritionTargets": "Nutrition Targets",
+  "dailyCalories": "Daily Calories",
+  "recalculateCaloriesToSeeTargets": "Recalculate calories to see targets",
+  "account": "Account",
+  "notAvailable": "Not available",
+  "signOut": "Sign Out",
+  "editProfile": "Edit Profile",
+  "activityLevel": "Activity Level",
+  "recalculateDailyCalories": "Recalculate Daily Calories",
+  "dailyCaloriesRecalculated": "Daily calories recalculated successfully",
+  "weeklyScore": "Weekly Score",
+  "thisWeek": "This Week",
+  "today": "Today",
+  "notLoggedYet": "Not logged yet",
+  "noWeekDataAvailable": "No week data available",
+  "unableToCalculateWeeklyScore": "Unable to calculate weekly score",
+  "greatConsistency": "Great consistency this week",
+  "onTrack": "You're on track",
+  "makingProgress": "Making good progress",
+  "freshStart": "Every day is a fresh start",
+  "noMealsLoggedForDay": "No meals logged for this day",
+  "errorLoadingDailySummary": "Error loading daily summary",
+  "errorLoadingMeals": "Error loading meals",
+  "googleSignInFailed": "Google Sign-In failed",
+  "googleSignInCanceled": "Google Sign-In canceled by user",
+  "googleSignInInterrupted": "Google Sign-In was interrupted. Please try again.",
+  "googleSignInConfigError": "Google Sign-In configuration error. Please ensure SHA-1 and SHA-256 certificates are added to Firebase Console. Get your SHA keys using: keytool -list -v -keystore android/app/debug.keystore",
+  "accountExistsDifferentCredential": "An account already exists with this email using a different sign-in method.",
+  "invalidCredentials": "Invalid credentials. Please try again.",
+  "googleSignInNotEnabled": "Google Sign-In is not enabled. Please contact support.",
+  "userAccountNotFound": "User account not found.",
+  "authenticationFailed": "Authentication failed: {message}",
+  "@authenticationFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "dismiss": "Dismiss",
+  "appleSignInFailed": "Apple Sign-In failed",
+  "appleSignInCanceled": "Apple Sign-In was canceled",
+  "appleSignInNotAvailable": "Apple Sign-In is not available. Please check your device settings.",
+  "errorSavingProfile": "Error saving profile: {error}",
+  "@errorSavingProfile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authenticationError": "Authentication Error",
+  "errorLoadingApp": "Error loading app",
+  "retry": "Retry",
+  "anErrorOccurredTurkish": "Bir hata oluştu",
+  "firebaseConfigError": "Firebase Yapılandırma Hatası",
+  "firebaseNotConfigured": "Firebase düzgün yapılandırılmamış.\n\nLütfen şunları kontrol edin:\n• iOS: ios/Runner/GoogleService-Info.plist dosyası mevcut mu?\n• Android: android/app/google-services.json dosyası mevcut mu?\n• Firebase Console'dan doğru dosyaları indirdiniz mi?",
+  "errorDetail": "Hata Detayı:\n{error}",
+  "@errorDetail": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "sunday": "Sunday",
+  "mon": "Mon",
+  "tue": "Tue",
+  "wed": "Wed",
+  "thu": "Thu",
+  "fri": "Fri",
+  "sat": "Sat",
+  "sun": "Sun",
+  "profileTitle": "Profile",
+  "dailyTargets": "Daily Targets",
+  "calories": "Calories",
+  "bodyStats": "Body Stats",
+  "gender": "Gender",
+  "years": "years",
+  "activityLevel": "Activity Level",
+  "editProfile": "Edit Profile",
+  "errorSigningOut": "Error signing out: {error}",
+  "@errorSigningOut": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSavingProfile": "Error saving profile: {error}",
+  "@errorSavingProfile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "signOutConfirmationTitle": "Sign Out",
+  "signOutConfirmationMessage": "Are you sure you want to sign out?",
+  "yes": "Yes",
+  "no": "No",
+  "deleteAccount": "Delete Account",
+  "deleteAccountConfirmationTitle": "Delete Account",
+  "deleteAccountConfirmationMessage": "Are you sure you want to delete your account? This action cannot be undone.",
+  "accountDeleted": "Account deleted successfully",
+  "errorDeletingAccount": "Error deleting account: {error}"
+}

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:notecal/core/firestore_helper.dart';
+import 'package:notecal/l10n/app_localizations.dart';
+import 'package:notecal/models/user_profile.dart';
+import 'package:notecal/services/target_calculator.dart';
 import '../home/home_screen.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
@@ -22,27 +26,36 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _ageController = TextEditingController();
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
+  
+  // Manual targets controllers
+  final _caloriesController = TextEditingController();
+  final _proteinController = TextEditingController();
+  final _carbsController = TextEditingController();
+  final _fatController = TextEditingController();
 
-  String _selectedGender = 'Male';
-  String _selectedActivityLevel = 'Sedentary (little or no exercise)';
+  String? _selectedGender;
+  String? _selectedActivityLevel;
+  UserGoal _selectedGoal = UserGoal.maintain;
+  TargetsMode _targetsMode = TargetsMode.auto;
+  
   bool _isLoading = false;
 
-  final List<String> _genderOptions = ['Male', 'Female'];
+  List<String> _getGenderOptions(AppLocalizations t) => [t.male, t.female];
 
-  final Map<String, double> _activityFactors = {
-    'Sedentary (little or no exercise)': 1.2,
-    'Lightly active (1–3 days/week)': 1.375,
-    'Moderately active (3–5 days/week)': 1.55,
-    'Very active (6–7 days/week)': 1.725,
-    'Athlete / super active': 1.9,
+  Map<String, double> _getActivityFactors(AppLocalizations t) => {
+    t.sedentary: 1.2,
+    t.lightlyActive: 1.375,
+    t.moderatelyActive: 1.55,
+    t.veryActive: 1.725,
+    t.athlete: 1.9,
   };
 
-  final Map<String, String> _activityLevelKeys = {
-    'Sedentary (little or no exercise)': 'sedentary',
-    'Lightly active (1–3 days/week)': 'lightly_active',
-    'Moderately active (3–5 days/week)': 'moderately_active',
-    'Very active (6–7 days/week)': 'very_active',
-    'Athlete / super active': 'athlete',
+  Map<String, String> _getActivityLevelKeys(AppLocalizations t) => {
+    t.sedentary: 'sedentary',
+    t.lightlyActive: 'lightly_active',
+    t.moderatelyActive: 'moderately_active',
+    t.veryActive: 'very_active',
+    t.athlete: 'athlete',
   };
 
   @override
@@ -52,106 +65,67 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _ageController.dispose();
     _heightController.dispose();
     _weightController.dispose();
+    _caloriesController.dispose();
+    _proteinController.dispose();
+    _carbsController.dispose();
+    _fatController.dispose();
     super.dispose();
   }
 
-  String? _validateFirstName(String? value) {
+  String? _validateFirstName(String? value, AppLocalizations t) {
     if (value == null || value.trim().isEmpty) {
-      return 'First name is required';
+      return t.firstNameRequired;
     }
     return null;
   }
 
-  String? _validateLastName(String? value) {
+  String? _validateLastName(String? value, AppLocalizations t) {
     if (value == null || value.trim().isEmpty) {
-      return 'Last name is required';
+      return t.lastNameRequired;
     }
     return null;
   }
 
-  String? _validateAge(String? value) {
+  String? _validateAge(String? value, AppLocalizations t) {
     if (value == null || value.trim().isEmpty) {
-      return 'Age is required';
+      return t.ageRequired;
     }
     final age = int.tryParse(value);
     if (age == null) {
-      return 'Please enter a valid number';
+      return t.pleaseEnterValidNumber;
     }
     if (age <= 10 || age >= 100) {
-      return 'Age must be between 11 and 99';
+      return t.ageBetween11And99;
     }
     return null;
   }
 
-  String? _validateHeight(String? value) {
+  String? _validateHeight(String? value, AppLocalizations t) {
     if (value == null || value.trim().isEmpty) {
-      return 'Height is required';
+      return t.heightRequired;
     }
     final height = double.tryParse(value);
     if (height == null) {
-      return 'Please enter a valid number';
+      return t.pleaseEnterValidNumber;
     }
     if (height <= 0 || height > 300) {
-      return 'Please enter a valid height (cm)';
+      return t.pleaseEnterValidHeight;
     }
     return null;
   }
 
-  String? _validateWeight(String? value) {
+  String? _validateWeight(String? value, AppLocalizations t) {
     if (value == null || value.trim().isEmpty) {
-      return 'Weight is required';
+      return t.weightRequired;
     }
     final weight = double.tryParse(value);
     if (weight == null) {
-      return 'Please enter a valid number';
+      return t.pleaseEnterValidNumber;
     }
     if (weight <= 0 || weight > 500) {
-      return 'Please enter a valid weight (kg)';
+      return t.pleaseEnterValidWeight;
     }
     return null;
-  }
-
-  double _calculateBMR(
-      double weightKg, double heightCm, int age, String gender) {
-    // Mifflin-St Jeor equation
-    if (gender.toLowerCase() == 'male') {
-      return 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
-    } else {
-      return 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
-    }
-  }
-
-  /// Saves user profile data to Firestore
-  Future<void> saveUserProfile({
-    required String firstName,
-    required String lastName,
-    required int age,
-    required double height,
-    required double weight,
-    required String gender,
-    required String activityLevel,
-    required double bmr,
-    required double tdee,
-  }) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      throw Exception('User not found');
-    }
-
-    final uid = user.uid;
-
-    await FirebaseFirestore.instance.collection('users').doc(uid).set({
-      'firstName': firstName,
-      'lastName': lastName,
-      'age': age,
-      'height': height,
-      'weight': weight,
-      'gender': gender,
-      'activityLevel': activityLevel,
-      'bmr': bmr,
-      'tdee': tdee,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
   }
 
   Future<void> _saveProfile() async {
@@ -164,50 +138,86 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     });
 
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('User not found');
+
       // Parse input values safely
       final firstName = _firstNameController.text.trim();
       final lastName = _lastNameController.text.trim();
-      final age = int.tryParse(_ageController.text);
-      final height = double.tryParse(_heightController.text);
-      final weight = double.tryParse(_weightController.text);
-      final gender = _selectedGender.toLowerCase();
-      final activityLevel = _activityLevelKeys[_selectedActivityLevel]!;
+      final age = int.tryParse(_ageController.text) ?? 0;
+      final height = double.tryParse(_heightController.text) ?? 0;
+      final weight = double.tryParse(_weightController.text) ?? 0;
+      final t = AppLocalizations.of(context)!;
+      final gender = _selectedGender?.toLowerCase() ?? 'male';
+      final activityLevelKeys = _getActivityLevelKeys(t);
+      final activityLevel = activityLevelKeys[_selectedActivityLevel] ?? 'sedentary';
 
-      // Validate parsed values
-      if (age == null) {
-        throw Exception('Invalid age value');
+      // Construct manual targets if manual mode
+      MacroTargets? manualTargets;
+      if (_targetsMode == TargetsMode.manual) {
+        manualTargets = MacroTargets(
+          calories: int.tryParse(_caloriesController.text) ?? 2000,
+          protein: int.tryParse(_proteinController.text) ?? 150,
+          carbs: int.tryParse(_carbsController.text) ?? 200,
+          fat: int.tryParse(_fatController.text) ?? 65,
+        );
       }
-      if (height == null) {
-        throw Exception('Invalid height value');
-      }
-      if (weight == null) {
-        throw Exception('Invalid weight value');
-      }
 
-      // Get activity factor for TDEE calculation
-      final activityFactor = _activityFactors[_selectedActivityLevel]!;
+      // We don't calculate TDEE here anymore to save it directly,
+      // we save the inputs and let the calculator derive it when needed,
+      // OR we calculate it to save as a cached value.
+      // FirestoreHelper.updateUserProfile expects tdee, so let's calculate it.
+      final tdee = TargetCalculator.calculateTDEE(
+        weightKg: weight,
+        heightCm: height,
+        age: age,
+        gender: gender,
+        activityLevel: activityLevel,
+      );
 
-      // Calculate BMR using Mifflin-St Jeor equation
-      final bmr = _calculateBMR(weight, height, age, gender);
-
-      // Calculate TDEE (Total Daily Energy Expenditure)
-      final tdee = bmr * activityFactor;
-
-      // Save user profile to Firestore
-      await saveUserProfile(
+      // Create a UserProfile object to use the TargetCalculator logic easily?
+      // Actually, we can just use FirestoreHelper directly.
+      // But we need to use the new method or the updated one.
+      
+      await FirestoreHelper.updateUserProfile(
+        user.uid,
+        username: '$firstName $lastName'.trim(), // Legacy field
+        age: age,
+        gender: gender,
+        height: height,
+        weight: weight,
+        activityLevel: activityLevel,
+        goal: _selectedGoal,
+        targetsMode: _targetsMode,
+        manualTargets: manualTargets,
+        tdee: tdee,
+      );
+      
+      // Also save first/last name as they are required for "complete" check
+      // FirestoreHelper.updateUserProfile doesn't save firstName/lastName separately in the legacy method
+      // so we might need to do a manual merge or update FirestoreHelper.
+      // Ideally we use saveUserProfile with a UserProfile object.
+      
+      final profile = UserProfile(
+        uid: user.uid,
+        email: user.email ?? '',
         firstName: firstName,
         lastName: lastName,
+        username: '$firstName $lastName'.trim(),
         age: age,
         height: height,
         weight: weight,
         gender: gender,
         activityLevel: activityLevel,
-        bmr: bmr,
+        goal: _selectedGoal,
+        targetsMode: _targetsMode,
+        manualTargets: manualTargets,
         tdee: tdee,
+        profileCompleted: true,
       );
+      
+      await FirestoreHelper.saveUserProfile(profile);
 
-      // If callback is provided, use it (AuthWrapper will handle navigation)
-      // Otherwise, navigate directly to HomeScreen (fallback)
       if (mounted) {
         if (widget.onProfileSaved != null) {
           widget.onProfileSaved!();
@@ -220,9 +230,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final t = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving profile: ${e.toString()}'),
+            content: Text(t.errorSavingProfile(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -298,14 +309,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 
-  Widget _buildSegmentedGender() {
+  Widget _buildSegmentedGender(AppLocalizations t) {
+    final genderOptions = _getGenderOptions(t);
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF8F8F8),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
-        children: _genderOptions.map((gender) {
+        children: genderOptions.map((gender) {
           final isSelected = _selectedGender == gender;
           return Expanded(
             child: GestureDetector(
@@ -339,9 +351,254 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 
-  Widget _buildActivityLevelChips() {
+  Widget _buildGoalSelector() {
     return Column(
-      children: _activityFactors.keys.map((level) {
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Your Goal',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1A1A1A),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F8F8),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: UserGoal.values.map((goal) {
+              final isSelected = _selectedGoal == goal;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: _isLoading
+                      ? null
+                      : () {
+                          setState(() {
+                            _selectedGoal = goal;
+                          });
+                        },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.black : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      goal.name[0].toUpperCase() + goal.name.substring(1),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTargetsSection() {
+    // Calculate preview targets
+    // We create a temporary profile to use the calculator
+    MacroTargets previewTargets;
+    
+    // Default values if inputs are empty
+    final age = int.tryParse(_ageController.text) ?? 25;
+    final height = double.tryParse(_heightController.text) ?? 170;
+    final weight = double.tryParse(_weightController.text) ?? 70;
+    final gender = _selectedGender?.toLowerCase() ?? 'male';
+    final activityLevel = _selectedActivityLevel ?? 'sedentary';
+    
+    // Map display activity to key
+    final t = AppLocalizations.of(context)!;
+    final activityKeys = _getActivityLevelKeys(t);
+    final activityKey = activityKeys[activityLevel] ?? 'sedentary';
+
+    final tempProfile = UserProfile(
+      uid: 'temp',
+      email: '',
+      age: age,
+      height: height,
+      weight: weight,
+      gender: gender,
+      activityLevel: activityKey,
+      goal: _selectedGoal,
+      targetsMode: _targetsMode,
+      manualTargets: _targetsMode == TargetsMode.manual ? MacroTargets(
+        calories: int.tryParse(_caloriesController.text) ?? 0,
+        protein: int.tryParse(_proteinController.text) ?? 0,
+        carbs: int.tryParse(_carbsController.text) ?? 0,
+        fat: int.tryParse(_fatController.text) ?? 0,
+      ) : null,
+    );
+
+    previewTargets = TargetCalculator.calculateTargets(tempProfile);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Nutrition Targets',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1A1A1A),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildModeButton(
+                TargetsMode.auto,
+                'Auto-Calculate',
+                Icons.auto_awesome,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildModeButton(
+                TargetsMode.manual,
+                'Manual Set',
+                Icons.edit_outlined,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        if (_targetsMode == TargetsMode.auto) ...[
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.withOpacity(0.2)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Daily Calories', style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text('${previewTargets.calories} kcal', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildMiniMacro('Protein', '${previewTargets.protein}g'),
+                    _buildMiniMacro('Carbs', '${previewTargets.carbs}g'),
+                    _buildMiniMacro('Fat', '${previewTargets.fat}g'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          _buildModernInput(
+            controller: _caloriesController,
+            placeholder: 'Target Calories (kcal)',
+            validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+            keyboardType: TextInputType.number,
+            icon: Icons.local_fire_department_outlined,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildModernInput(
+                  controller: _proteinController,
+                  placeholder: 'Protein (g)',
+                  validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildModernInput(
+                  controller: _carbsController,
+                  placeholder: 'Carbs (g)',
+                  validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildModernInput(
+                  controller: _fatController,
+                  placeholder: 'Fat (g)',
+                  validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildModeButton(TargetsMode mode, String label, IconData icon) {
+    final isSelected = _targetsMode == mode;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _targetsMode = mode;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.black : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? Colors.black : Colors.grey[300]!),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? Colors.white : Colors.grey[600],
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey[600],
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniMacro(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+      ],
+    );
+  }
+
+  Widget _buildActivityLevelChips(AppLocalizations t) {
+    final activityFactors = _getActivityFactors(t);
+    return Column(
+      children: activityFactors.keys.map((level) {
         final isSelected = _selectedActivityLevel == level;
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -380,6 +637,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    
+    // Initialize gender and activity level on first build
+    if (_selectedGender == null) {
+      _selectedGender = t.male;
+    }
+    if (_selectedActivityLevel == null) {
+      _selectedActivityLevel = t.sedentary;
+    }
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -391,9 +658,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 36),
-                const Text(
-                  'Set up your profile',
-                  style: TextStyle(
+                Text(
+                  t.setUpYourProfile,
+                  style: const TextStyle(
                     fontSize: 38,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF1A1A1A),
@@ -402,7 +669,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tell us about yourself to calculate your BMR',
+                  t.tellUsAboutYourself,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
@@ -412,32 +679,32 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 const SizedBox(height: 44),
                 _buildModernInput(
                   controller: _firstNameController,
-                  placeholder: 'First name',
-                  validator: _validateFirstName,
+                  placeholder: t.firstName,
+                  validator: (value) => _validateFirstName(value, t),
                   icon: Icons.person_outline,
                 ),
                 const SizedBox(height: 24),
                 _buildModernInput(
                   controller: _lastNameController,
-                  placeholder: 'Last name',
-                  validator: _validateLastName,
+                  placeholder: t.lastName,
+                  validator: (value) => _validateLastName(value, t),
                   icon: Icons.person_outline,
                 ),
                 const SizedBox(height: 24),
                 _buildModernInput(
                   controller: _ageController,
-                  placeholder: 'Age',
-                  validator: _validateAge,
+                  placeholder: t.age,
+                  validator: (value) => _validateAge(value, t),
                   keyboardType: TextInputType.number,
                   icon: Icons.calendar_today_outlined,
                 ),
                 const SizedBox(height: 28),
-                _buildSegmentedGender(),
+                _buildSegmentedGender(t),
                 const SizedBox(height: 28),
                 _buildModernInput(
                   controller: _heightController,
-                  placeholder: 'Height (cm)',
-                  validator: _validateHeight,
+                  placeholder: t.heightCm,
+                  validator: (value) => _validateHeight(value, t),
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.height_outlined,
@@ -445,14 +712,18 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 const SizedBox(height: 24),
                 _buildModernInput(
                   controller: _weightController,
-                  placeholder: 'Weight (kg)',
-                  validator: _validateWeight,
+                  placeholder: t.weightKg,
+                  validator: (value) => _validateWeight(value, t),
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   icon: Icons.monitor_weight_outlined,
                 ),
                 const SizedBox(height: 28),
-                _buildActivityLevelChips(),
+                _buildActivityLevelChips(t),
+                const SizedBox(height: 28),
+                _buildGoalSelector(),
+                const SizedBox(height: 28),
+                _buildTargetsSection(),
                 const SizedBox(height: 40),
                 _isLoading
                     ? const Center(
@@ -475,10 +746,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           child: InkWell(
                             onTap: _saveProfile,
                             borderRadius: BorderRadius.circular(24),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'Continue',
-                                style: TextStyle(
+                                t.continueButton,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 17,
                                   fontWeight: FontWeight.w700,

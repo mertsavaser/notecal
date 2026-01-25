@@ -2,11 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:notecal/l10n/app_localizations.dart';
 import '../../widgets/input_field.dart';
 import '../../widgets/primary_button.dart';
 import '../../core/firestore_helper.dart';
+import '../../services/apple_auth_service.dart';
+import '../../services/google_auth_service.dart';
 import 'signup_screen.dart';
 import 'auth_buttons.dart';
 
@@ -30,25 +31,27 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
+  String? _validateEmail(String? value, AppLocalizations t) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return t.emailRequired;
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email';
+      return t.enterValidEmail;
     }
     return null;
   }
 
-  String? _validatePassword(String? value) {
+  String? _validatePassword(String? value, AppLocalizations t) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return t.passwordRequired;
     }
     return null;
   }
 
   Future<void> _loginWithEmail() async {
+    final t = AppLocalizations.of(context)!;
+    
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -66,26 +69,26 @@ class _LoginScreenState extends State<LoginScreen> {
       // Navigation is handled automatically by AuthWrapper
       // No need to navigate manually
     } on FirebaseAuthException catch (e) {
-      String errorMessage = 'An error occurred';
+      String errorMessage = t.anErrorOccurred;
 
       switch (e.code) {
         case 'user-not-found':
-          errorMessage = 'No user found with this email';
+          errorMessage = t.noUserFound;
           break;
         case 'wrong-password':
-          errorMessage = 'Incorrect password';
+          errorMessage = t.incorrectPassword;
           break;
         case 'invalid-email':
-          errorMessage = 'Invalid email address';
+          errorMessage = t.invalidEmailAddress;
           break;
         case 'user-disabled':
-          errorMessage = 'This account has been disabled';
+          errorMessage = t.accountDisabled;
           break;
         case 'invalid-credential':
-          errorMessage = 'Invalid email or password';
+          errorMessage = t.invalidEmailOrPassword;
           break;
         default:
-          errorMessage = e.message ?? 'An error occurred';
+          errorMessage = e.message ?? t.anErrorOccurred;
       }
 
       if (mounted) {
@@ -100,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('${t.anErrorOccurred}: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -115,76 +118,60 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<User?> _loginWithGoogle() async {
+    if (_isLoading) return null; // Prevent multiple simultaneous sign-ins
+    
+    if (!mounted) return null;
+    
+    // Update UI state first to show loading indicator
     setState(() {
       _isLoading = true;
     });
+    
+    // Allow UI to update before starting async operation
+    await Future.delayed(const Duration(milliseconds: 100));
 
     try {
-      print('[Google Sign-In] Starting authentication flow...');
+      print('[LoginScreen] Starting Google Sign-In via GoogleAuthService...');
 
-      // Initialize Google Sign-In instance
-      final GoogleSignIn googleSignIn = GoogleSignIn();
+      // Perform authentication via service (no navigation inside service)
+      final userCredential = await GoogleAuthService.signInWithGoogle();
 
-      // Trigger the Google Sign-In flow
-      print('[Google Sign-In] Requesting user sign-in...');
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      // If widget was disposed while awaiting, abort safely
+      if (!mounted) {
+        return null;
+      }
 
-      if (googleUser == null) {
-        // User canceled the sign-in
-        print('[Google Sign-In] User canceled the sign-in');
+      // User canceled the sign-in flow
+      if (userCredential == null) {
+        print('[LoginScreen] Google Sign-In canceled by user');
         setState(() {
           _isLoading = false;
         });
         return null;
       }
 
-      print('[Google Sign-In] User signed in: ${googleUser.email}');
-
-      // Obtain the auth details from the request
-      print('[Google Sign-In] Obtaining authentication credentials...');
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Validate that we have required tokens
-      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-        throw Exception(
-          'Google Sign-In returned null tokens. This may indicate a configuration issue. '
-          'Please ensure SHA-1 and SHA-256 fingerprints are added to Firebase Console.',
-        );
-      }
-
-      print('[Google Sign-In] Creating Firebase credential...');
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credential
-      print('[Google Sign-In] Signing in to Firebase...');
-      final userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
-
-      if (userCredential.user == null) {
-        throw Exception('Firebase sign-in returned null user');
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception('Google Sign-In failed: user is null after sign-in');
       }
 
       print(
-          '[Google Sign-In] Successfully signed in: ${userCredential.user!.uid}');
+          '[LoginScreen] Google Sign-In succeeded for UID: ${user.uid}');
 
       // Check if this is a new user and create base Firestore document
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
         print(
-            '[Google Sign-In] New user detected, creating Firestore document...');
+            '[LoginScreen] New Google user detected, creating Firestore document...');
         try {
           await FirestoreHelper.createBaseUserDocument(
-            userCredential.user!.uid,
-            userCredential.user!.email ?? '',
+            user.uid,
+            user.email ?? '',
           );
-          print('[Google Sign-In] Firestore document created successfully');
+          print(
+              '[LoginScreen] Google user Firestore document created successfully');
         } catch (e) {
-          print('[Google Sign-In] Error creating Firestore document: $e');
+          print(
+              '[LoginScreen] Error creating Firestore document for Google user: $e');
           // Continue even if Firestore fails - user is still authenticated
         }
       }
@@ -193,33 +180,32 @@ class _LoginScreenState extends State<LoginScreen> {
       print('[Google Sign-In] Authentication complete');
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      print('[Google Sign-In] Firebase Auth Error:');
+      print('[LoginScreen] Google Sign-In Firebase Auth Error:');
       print('  Code: ${e.code}');
       print('  Message: ${e.message}');
       print('  Details: ${e.toString()}');
 
-      String errorMessage = 'Google Sign-In failed';
+      final t = AppLocalizations.of(context)!;
+      String errorMessage = t.googleSignInFailed;
 
       switch (e.code) {
         case 'account-exists-with-different-credential':
-          errorMessage =
-              'An account already exists with this email using a different sign-in method.';
+          errorMessage = t.accountExistsDifferentCredential;
           break;
         case 'invalid-credential':
-          errorMessage = 'Invalid credentials. Please try again.';
+          errorMessage = t.invalidCredentials;
           break;
         case 'operation-not-allowed':
-          errorMessage =
-              'Google Sign-In is not enabled. Please contact support.';
+          errorMessage = t.googleSignInNotEnabled;
           break;
         case 'user-disabled':
-          errorMessage = 'This account has been disabled.';
+          errorMessage = t.accountDisabled;
           break;
         case 'user-not-found':
-          errorMessage = 'User account not found.';
+          errorMessage = t.userAccountNotFound;
           break;
         default:
-          errorMessage = 'Authentication failed: ${e.message ?? e.code}';
+          errorMessage = t.authenticationFailed(e.message ?? e.code);
       }
 
       if (mounted) {
@@ -233,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       return null;
     } catch (e) {
-      print('[Google Sign-In] General Error:');
+      print('[LoginScreen] Google Sign-In General Error:');
       print('  Type: ${e.runtimeType}');
       print('  Message: ${e.toString()}');
       if (e is PlatformException) {
@@ -242,14 +228,8 @@ class _LoginScreenState extends State<LoginScreen> {
         print('  Details: ${e.details}');
       }
 
-      // Check if login actually succeeded despite the error
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        print('[Google Sign-In] Login succeeded despite error, continuing...');
-        return currentUser;
-      }
-
-      String errorMessage = 'Google Sign-In failed: ${e.toString()}';
+      final t = AppLocalizations.of(context)!;
+      String errorMessage = '${t.googleSignInFailed}: ${e.toString()}';
 
       // Check for common configuration errors - only show if login actually failed
       if (e.toString().contains('PlatformException') ||
@@ -261,12 +241,10 @@ class _LoginScreenState extends State<LoginScreen> {
         if (errorString.contains('network') ||
             errorString.contains('timeout') ||
             errorString.contains('cancelled')) {
-          errorMessage = 'Google Sign-In was interrupted. Please try again.';
+          errorMessage = t.googleSignInInterrupted;
         } else {
           // Only show SHA configuration error for actual configuration failures
-          errorMessage = 'Google Sign-In configuration error. '
-              'Please ensure SHA-1 and SHA-256 certificates are added to Firebase Console. '
-              'Get your SHA keys using: keytool -list -v -keystore android/app/debug.keystore';
+          errorMessage = t.googleSignInConfigError;
         }
       }
 
@@ -277,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 6),
             action: SnackBarAction(
-              label: 'Dismiss',
+              label: t.dismiss,
               textColor: Colors.white,
               onPressed: () {},
             ),
@@ -286,11 +264,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       return null;
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return null;
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -304,54 +281,67 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Request Apple ID credential
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
+      // Use AppleAuthService for secure sign-in with nonce generation
+      final userCredential = await AppleAuthService.signInWithApple();
 
-      // Create OAuth credential for Firebase
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
-
-      // Sign in to Firebase with the Apple credential
-      final userCredential =
-          await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+      // If widget was disposed while awaiting, abort safely
+      if (!mounted) return;
 
       // Check if this is a new user and create base Firestore document
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        await FirestoreHelper.createBaseUserDocument(
-          userCredential.user!.uid,
-          userCredential.user!.email ?? '',
-        );
+        try {
+          await FirestoreHelper.createBaseUserDocument(
+            userCredential.user!.uid,
+            userCredential.user!.email ?? '',
+          );
+          print('[Apple Sign-In] Firestore document created successfully');
+        } catch (e) {
+          print('[Apple Sign-In] Error creating Firestore document: $e');
+          // Continue even if Firestore fails - user is still authenticated
+        }
       }
 
       // Navigation is handled automatically by AuthWrapper
-      // No need to navigate manually
+      print('[Apple Sign-In] Authentication complete');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Apple Sign-In failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      print('[Apple Sign-In] Error: ${e.toString()}');
+      
+      if (!mounted) return;
+
+      final t = AppLocalizations.of(context)!;
+      // Extract readable error message
+      String errorMessage = t.appleSignInFailed;
+      if (e is Exception) {
+        final msg = e.toString().replaceFirst('Exception: ', '');
+        if (msg.contains('canceled')) {
+          errorMessage = t.appleSignInCanceled;
+        } else if (msg.contains('not available')) {
+          errorMessage = t.appleSignInNotAvailable;
+        } else {
+          errorMessage = msg;
+        }
+      } else {
+        errorMessage = e.toString();
       }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     print('[LoginScreen] build() called');
     return Scaffold(
       backgroundColor: Colors.white,
@@ -364,45 +354,45 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 40),
-                const Text(
-                  'Welcome Back',
-                  style: TextStyle(
+                Text(
+                  t.welcomeBack,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Login to continue',
-                  style: TextStyle(
+                Text(
+                  t.loginToContinue,
+                  style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF6B7280),
                   ),
                 ),
                 const SizedBox(height: 32),
                 InputField(
-                  hintText: 'Email',
+                  hintText: t.email,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: const [AutofillHints.email],
                   textInputAction: TextInputAction.next,
                   prefixIcon: const Icon(Icons.email_outlined),
-                  validator: _validateEmail,
+                  validator: (value) => _validateEmail(value, t),
                 ),
                 const SizedBox(height: 16),
                 InputField(
-                  hintText: 'Password',
+                  hintText: t.password,
                   controller: _passwordController,
                   obscureText: true,
                   prefixIcon: const Icon(Icons.lock_outlined),
-                  validator: _validatePassword,
+                  validator: (value) => _validatePassword(value, t),
                 ),
                 const SizedBox(height: 24),
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : PrimaryButton(
-                        text: 'Login',
+                        text: t.login,
                         onPressed: _loginWithEmail,
                       ),
                 const SizedBox(height: 24),
@@ -412,7 +402,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'or',
+                        t.or,
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 14,
@@ -424,11 +414,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 GoogleAuthButton(
-                  onPressed: _isLoading
-                      ? () {}
-                      : () async {
-                          await _loginWithGoogle();
-                        },
+                  onPressed: _isLoading ? null : () {
+                    _loginWithGoogle(); // Fire and forget - Future is handled internally
+                  },
                 ),
                 const SizedBox(height: 16),
                 AppleAuthButton(
@@ -439,9 +427,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        "Don't have an account? ",
-                        style: TextStyle(
+                      Text(
+                        t.dontHaveAccount,
+                        style: const TextStyle(
                           color: Color(0xFF6B7280),
                           fontSize: 14,
                         ),
@@ -455,9 +443,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           );
                         },
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(
+                        child: Text(
+                          t.signUp,
+                          style: const TextStyle(
                             color: Colors.black,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
