@@ -5,6 +5,7 @@ import 'package:notecal/l10n/app_localizations.dart';
 import '../../widgets/input_field.dart';
 import '../../widgets/primary_button.dart';
 import '../../utils/app_logger.dart';
+import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -88,6 +89,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
       AppLogger.d('SignupScreen',
           'Email signup succeeded - AuthWrapper will handle post-auth');
+      // Mark that user has logged in before
+      await markLoggedInBefore();
       // Navigation and ensureUserDoc() handled automatically by AuthWrapper via authStateChanges
 
       if (mounted) {
@@ -103,9 +106,10 @@ class _SignupScreenState extends State<SignupScreen> {
     } on TimeoutException catch (e) {
       AppLogger.e('SignupScreen', 'Timeout during signup', e);
       if (mounted) {
+        final t = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Network timeout. Please try again.'),
+          SnackBar(
+            content: Text(t.networkTimeout),
             backgroundColor: Colors.red,
           ),
         );
@@ -142,10 +146,11 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (e) {
       AppLogger.e('SignupScreen', 'Signup error', e);
       if (mounted) {
+        final t = AppLocalizations.of(context)!;
         String errorMessage =
             'Error: ${e.toString().replaceFirst('Exception: ', '')}';
         if (e.toString().contains('timeout')) {
-          errorMessage = 'Network timeout. Please try again.';
+          errorMessage = t.networkTimeout;
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

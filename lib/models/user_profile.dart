@@ -108,6 +108,15 @@ class UserProfile {
   // Computed/Stored TDEE
   final double? tdee;
 
+  // Profile photo URL
+  final String? photoURL;
+
+  // Profile photo storage path
+  final String? photoPath;
+
+  // Target mode: "calories" or "macros"
+  final String? targetMode;
+
   final bool profileCompleted;
 
   const UserProfile({
@@ -125,6 +134,9 @@ class UserProfile {
     this.targetsMode = TargetsMode.auto,
     this.manualTargets,
     this.tdee,
+    this.photoURL,
+    this.photoPath,
+    this.targetMode,
     this.profileCompleted = false,
   });
 
@@ -146,6 +158,10 @@ class UserProfile {
           ? MacroTargets.fromMap(map['manualTargets'])
           : null,
       tdee: (map['tdee'] as num?)?.toDouble(),
+      photoURL: map['photoURL'] as String? ??
+          map['photoUrl'] as String?, // Support both camelCase and lowercase
+      photoPath: map['photoPath'] as String?,
+      targetMode: map['targetMode'] as String?,
       profileCompleted: map['profileCompleted'] == true,
     );
   }
@@ -165,6 +181,10 @@ class UserProfile {
       'targetsMode': targetsMode.name,
       'manualTargets': manualTargets?.toMap(),
       'tdee': tdee,
+      'photoUrl':
+          photoURL, // Use photoUrl (lowercase) for Firestore consistency
+      'photoPath': photoPath,
+      'targetMode': targetMode,
       'profileCompleted': profileCompleted,
     };
   }
@@ -182,6 +202,9 @@ class UserProfile {
     TargetsMode? targetsMode,
     MacroTargets? manualTargets,
     double? tdee,
+    String? photoURL,
+    String? photoPath,
+    String? targetMode,
     bool? profileCompleted,
   }) {
     return UserProfile(
@@ -199,6 +222,9 @@ class UserProfile {
       targetsMode: targetsMode ?? this.targetsMode,
       manualTargets: manualTargets ?? this.manualTargets,
       tdee: tdee ?? this.tdee,
+      photoURL: photoURL ?? this.photoURL,
+      photoPath: photoPath ?? this.photoPath,
+      targetMode: targetMode ?? this.targetMode,
       profileCompleted: profileCompleted ?? this.profileCompleted,
     );
   }

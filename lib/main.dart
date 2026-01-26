@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:notecal/l10n/app_localizations.dart';
+import 'package:notecal/services/notification_service.dart';
+import 'package:notecal/services/fresh_install_service.dart';
 import 'app.dart';
 
 void main() async {
@@ -12,8 +15,10 @@ void main() async {
   // Global error handling
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    print('[FLUTTER ERROR] ${details.exception}');
-    print('[FLUTTER ERROR] Stack: ${details.stack}');
+    if (kDebugMode) {
+      debugPrint('[FLUTTER ERROR] ${details.exception}');
+      debugPrint('[FLUTTER ERROR] Stack: ${details.stack}');
+    }
   };
 
   // Custom error widget to show errors in UI
@@ -55,41 +60,69 @@ void main() async {
   // CRITICAL: App cannot run without Firebase
   try {
     final app = await Firebase.initializeApp();
-    print('[INIT] Firebase initialized successfully');
-
-    // Debug: Print Firebase app options
-    print('[INIT] Firebase App Name: ${app.name}');
-    print('[INIT] Firebase Project ID: ${app.options.projectId}');
-    print('[INIT] Firebase API Key: ${app.options.apiKey}');
-    print('[INIT] Firebase App ID: ${app.options.appId}');
+    if (kDebugMode) {
+      debugPrint('[INIT] Firebase initialized: ${app.options.projectId}');
+    }
 
     // Verify Firebase is actually initialized
     if (Firebase.apps.isEmpty) {
       throw Exception('Firebase apps list is empty after initialization');
     }
 
-    // Debug: Print Firestore instance info
-    final firestore = FirebaseFirestore.instance;
-    print('[INIT] Firestore Instance: ${firestore.app.name}');
-    print('[INIT] Firestore Database ID: ${firestore.app.options.projectId}');
-
-    // Check if using emulator
-    final settings = firestore.settings;
-    print('[INIT] Firestore Host: ${settings.host}');
-    print('[INIT] Firestore SSL Enabled: ${settings.sslEnabled}');
-    print(
-        '[INIT] Firestore Persistence Enabled: ${settings.cacheSizeBytes != 0}');
-
     // Verify Firebase Auth is ready
     final auth = FirebaseAuth.instance;
-    print('[INIT] Firebase Auth instance ready');
-    print('[INIT] Current user after init: ${auth.currentUser?.uid ?? "null"}');
+    if (kDebugMode && auth.currentUser != null) {
+      debugPrint('[INIT] User already signed in: ${auth.currentUser!.uid}');
+    }
+
+    // Check for fresh install and force logout if needed
+    // This MUST run before routing decisions
+    try {
+      final wasFreshInstall =
+          await FreshInstallService.checkAndHandleFreshInstall();
+      if (kDebugMode) {
+        if (wasFreshInstall) {
+          debugPrint('[INIT] Fresh install detected - user logged out');
+        } else {
+          debugPrint('[INIT] Not a fresh install - proceeding normally');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[INIT] Fresh install check failed (non-fatal): $e');
+      }
+    }
+
+    // Initialize home_widget
+    try {
+      await HomeWidget.setAppGroupId('group.com.mertsavaser.notecal');
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[INIT] HomeWidget initialization failed (non-fatal): $e');
+      }
+    }
+
+    // Initialize notification service
+    try {
+      await NotificationService.initialize();
+      // Auto-enable reminder if permission granted and user hasn't set preference
+      await NotificationService.autoEnableIfNeeded();
+      // Reschedule if enabled
+      await NotificationService.rescheduleNextIfNeeded();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+            '[INIT] NotificationService initialization failed (non-fatal): $e');
+      }
+    }
 
     // All checks passed, run the app
     runApp(const NotecalApp());
   } catch (e, stackTrace) {
-    print('[INIT] ❌ Firebase initialization FAILED: $e');
-    print('[INIT] Stack trace: $stackTrace');
+    debugPrint('[INIT] Firebase initialization FAILED: $e');
+    if (kDebugMode) {
+      debugPrint('[INIT] Stack: $stackTrace');
+    }
 
     // Show error screen instead of crashing
     runApp(

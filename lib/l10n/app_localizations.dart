@@ -197,8 +197,14 @@ abstract class AppLocalizations {
   /// No description provided for @appleSignIn.
   ///
   /// In en, this message translates to:
-  /// **'Apple ile giriş'**
+  /// **'Sign in with Apple'**
   String get appleSignIn;
+
+  /// No description provided for @welcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome'**
+  String get welcome;
 
   /// No description provided for @dontHaveAccount.
   ///
@@ -1303,6 +1309,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error deleting account: {error}'**
   String errorDeletingAccount(Object error);
+
+  /// No description provided for @networkTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Network timeout. Please try again.'**
+  String get networkTimeout;
 }
 
 class _AppLocalizationsDelegate

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:notecal/l10n/app_localizations.dart';
 import '../services/meal_service.dart';
 
@@ -122,7 +123,9 @@ class _AddMealBottomSheetState extends State<AddMealBottomSheet> {
       await _mealService.restoreSystemMeal(today, mealName);
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      print('Error restoring meal: $e');
+      if (kDebugMode) {
+        debugPrint('Error restoring meal: $e');
+      }
       if (mounted) setState(() => _isLoading = false);
     }
   }

@@ -19,7 +19,8 @@
   "login": "Login",
   "or": "or",
   "continueWithGoogle": "Continue with Google",
-  "appleSignIn": "Apple ile giriş",
+  "appleSignIn": "Sign in with Apple",
+  "welcome": "Welcome",
   "dontHaveAccount": "Don't have an account? ",
   "signUp": "Sign Up",
   "createAccount": "Create Account",
@@ -288,5 +289,6 @@
   "deleteAccountConfirmationTitle": "Delete Account",
   "deleteAccountConfirmationMessage": "Are you sure you want to delete your account? This action cannot be undone.",
   "accountDeleted": "Account deleted successfully",
-  "errorDeletingAccount": "Error deleting account: {error}"
+  "errorDeletingAccount": "Error deleting account: {error}",
+  "networkTimeout": "Network timeout. Please try again."
 }

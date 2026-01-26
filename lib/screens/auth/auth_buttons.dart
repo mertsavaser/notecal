@@ -94,9 +94,9 @@ class AppleAuthButton extends StatelessWidget {
             const SizedBox(width: 12),
             Builder(
               builder: (context) {
-                final t = AppLocalizations.of(context);
+                final t = AppLocalizations.of(context)!;
                 return Text(
-                  t?.appleSignIn ?? 'Apple ile giriş',
+                  t.appleSignIn,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

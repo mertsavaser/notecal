@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:notecal/l10n/app_localizations.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import 'auth_wrapper.dart';
@@ -23,12 +24,18 @@ class _RootWrapperState extends State<RootWrapper> {
 
   void _checkOnboardingStatus() {
     if (!_hasInitialized) {
-      print('[RootWrapper] Starting onboarding check...');
+      if (kDebugMode) {
+        debugPrint('[RootWrapper] Starting onboarding check...');
+      }
       final future = OnboardingHelper.isOnboardingCompleted();
       future.then((value) {
-        print('[RootWrapper] Onboarding check future completed: $value');
+        if (kDebugMode) {
+          debugPrint('[RootWrapper] Onboarding check future completed: $value');
+        }
       }).catchError((error) {
-        print('[RootWrapper] Onboarding check future error: $error');
+        if (kDebugMode) {
+          debugPrint('[RootWrapper] Onboarding check future error: $error');
+        }
       });
       setState(() {
         _onboardingCheckFuture = future;
@@ -39,11 +46,15 @@ class _RootWrapperState extends State<RootWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    print('[RootWrapper] build() called');
+    if (kDebugMode) {
+      debugPrint('[RootWrapper] build() called');
+    }
 
     // Initialize if not done yet
     if (_onboardingCheckFuture == null) {
-      print('[RootWrapper] Initializing onboarding check...');
+      if (kDebugMode) {
+        debugPrint('[RootWrapper] Initializing onboarding check...');
+      }
       _checkOnboardingStatus();
       return const Scaffold(
         body: Center(
@@ -55,14 +66,18 @@ class _RootWrapperState extends State<RootWrapper> {
     return FutureBuilder<bool>(
       future: _onboardingCheckFuture,
       builder: (context, snapshot) {
-        print(
-            '[RootWrapper] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
-        print(
-            '[RootWrapper] FutureBuilder - hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
+        if (kDebugMode) {
+          debugPrint(
+              '[RootWrapper] FutureBuilder - ConnectionState: ${snapshot.connectionState}');
+          debugPrint(
+              '[RootWrapper] FutureBuilder - hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
+        }
 
         // Show loading while checking onboarding status
         if (snapshot.connectionState == ConnectionState.waiting) {
-          print('[RootWrapper] Waiting for onboarding check...');
+          if (kDebugMode) {
+            debugPrint('[RootWrapper] Waiting for onboarding check...');
+          }
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -72,7 +87,10 @@ class _RootWrapperState extends State<RootWrapper> {
 
         // Handle errors - assume onboarding not completed (show onboarding)
         if (snapshot.hasError) {
-          print('[RootWrapper] Error checking onboarding: ${snapshot.error}');
+          if (kDebugMode) {
+            debugPrint(
+                '[RootWrapper] Error checking onboarding: ${snapshot.error}');
+          }
           return Scaffold(
             backgroundColor: Colors.white,
             body: Center(
@@ -121,16 +139,22 @@ class _RootWrapperState extends State<RootWrapper> {
         }
 
         final isCompleted = snapshot.data ?? false;
-        print('[RootWrapper] Onboarding completed: $isCompleted');
+        if (kDebugMode) {
+          debugPrint('[RootWrapper] Onboarding completed: $isCompleted');
+        }
 
         // Onboarding completed → go to AuthWrapper (AuthWrapper has its own Scaffold)
         if (isCompleted) {
-          print('[RootWrapper] Showing AuthWrapper');
+          if (kDebugMode) {
+            debugPrint('[RootWrapper] Showing AuthWrapper');
+          }
           return const AuthWrapper();
         }
 
         // Onboarding NOT completed → show OnboardingScreen (OnboardingScreen has its own Scaffold)
-        print('[RootWrapper] Showing OnboardingScreen');
+        if (kDebugMode) {
+          debugPrint('[RootWrapper] Showing OnboardingScreen');
+        }
         return const OnboardingScreen();
       },
     );

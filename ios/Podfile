@@ -1,5 +1,5 @@
 # Define the platform version for your project
-platform :ios, '13.0'
+platform :ios, '14.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -43,7 +43,12 @@ post_install do |installer|
     # Fix common warnings
     target.build_configurations.each do |config|
       # Set minimum iOS deployment target
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      
+      # Fix SDK root warning for native_assets
+      if config.build_settings['SDKROOT'].nil?
+        config.build_settings['SDKROOT'] = 'iphoneos'
+      end
       
       # ============================================
       # ADIM 1: Deprecated API Uyarıları

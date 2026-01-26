@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'food_search_cache_service.dart';
 
 class FirestoreFoodService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FoodSearchCacheService _cacheService = FoodSearchCacheService();
 
   FirestoreFoodService();
 
@@ -28,14 +30,40 @@ class FirestoreFoodService {
     return defaultValue;
   }
 
-  // Search foods by name
+  // Search foods by name (with caching)
   Future<List<Map<String, dynamic>>> searchFoods(String query) async {
     if (query.isEmpty || query.length < 2) {
-      return [];
+      // For empty/short queries, return recently used foods as fallback
+      final recentlyUsed = await _cacheService.getRecentlyUsedFoods();
+      // Convert to search result format
+      return recentlyUsed
+          .map((item) => {
+                'id': item['id'] ?? '',
+                'name': item['displayName'] ?? '',
+                'calories': (item['caloriesPer100'] as num?)?.toDouble() ?? 0.0,
+                'protein': (item['proteinPer100'] as num?)?.toDouble() ?? 0.0,
+                'carbs': (item['carbsPer100'] as num?)?.toDouble() ?? 0.0,
+                'fat': (item['fatPer100'] as num?)?.toDouble() ?? 0.0,
+                'serving_size':
+                    (item['servingSize'] as num?)?.toDouble() ?? 100.0,
+                'serving_unit': item['servingUnit'] ?? 'g',
+                'amount': (item['servingSize'] as num?)?.toDouble() ?? 100.0,
+                'unit': item['servingUnit'] ?? 'g',
+                'category': item['category'],
+              })
+          .toList();
     }
 
-    final lowerQuery = query.toLowerCase().trim();
-    print('[DEBUG] Search query: "$lowerQuery"');
+    final normalizedQuery = FoodSearchCacheService.normalizeQuery(query);
+
+    // Check in-memory cache first
+    final cachedResults = _cacheService.getCachedResults(normalizedQuery);
+    if (cachedResults != null) {
+      return cachedResults;
+    }
+
+    // Cache miss - fetch from Firestore
+    final lowerQuery = normalizedQuery;
 
     try {
       // 1. Try search by name_lowercase (preferred)
@@ -51,7 +79,6 @@ class FirestoreFoodService {
       // 2. Fallback: If no results, try searching by exact name or capitalized name
       // (In case name_lowercase is missing or legacy data)
       if (querySnapshot.docs.isEmpty) {
-        print('[DEBUG] No results for name_lowercase, trying "name" field');
         // Try capitalized (e.g. "apple" -> "Apple")
         final capitalized = lowerQuery.length > 0
             ? '${lowerQuery[0].toUpperCase()}${lowerQuery.substring(1)}'
@@ -65,8 +92,6 @@ class FirestoreFoodService {
             .limit(20)
             .get();
       }
-
-      print('[DEBUG] Found ${querySnapshot.docs.length} documents');
 
       final results = <Map<String, dynamic>>[];
 
@@ -99,14 +124,27 @@ class FirestoreFoodService {
             'category': data['category']?.toString(),
           });
         } catch (e) {
-          print('[DEBUG] Warning: Failed to parse document ${doc.id}: $e');
+          // Skip invalid documents
         }
       }
 
+      // Cache the results
+      _cacheService.cacheResults(normalizedQuery, results);
+
       return results;
     } catch (e) {
-      print('[DEBUG] Error searching foods: $e');
+      // On error, try to return recently used foods as fallback
+      final recentlyUsed = await _cacheService.getRecentlyUsedFoods();
+      if (recentlyUsed.isNotEmpty) {
+        return recentlyUsed;
+      }
+      // Return empty on error
       return [];
     }
+  }
+
+  /// Add a food to recently used cache (called when user adds food to meal)
+  Future<void> markFoodAsUsed(Map<String, dynamic> food) async {
+    await _cacheService.addToRecentlyUsed(food);
   }
 }

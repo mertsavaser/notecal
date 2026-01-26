@@ -52,9 +52,21 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
     final query = _searchController.text.trim();
 
     if (query.isEmpty || query.length < 2) {
+      // For empty/short queries, show recently used foods
       if (mounted) {
         setState(() {
-          _searchResults = [];
+          _isSearching = true;
+          _hasSearched = false;
+        });
+      }
+
+      // Get recently used foods from cache
+      final recentlyUsed = await _foodService
+          .searchFoods(''); // Empty query returns recently used
+
+      if (mounted) {
+        setState(() {
+          _searchResults = recentlyUsed;
           _isSearching = false;
           _hasSearched = false;
         });
@@ -423,12 +435,19 @@ class _FoodSearchScreenState extends State<FoodSearchScreen>
           itemCount: foods.length,
           itemBuilder: (context, index) {
             final food = foods[index];
+            // For recent foods, calculate calories from per100 + lastAmount for display
+            final displayCalories = food['isRecent'] == true
+                ? ((food['caloriesPer100'] as num?)?.toDouble() ?? 0.0) *
+                    ((food['lastAmount'] as num?)?.toDouble() ?? 100.0) /
+                    100.0
+                : (food['calories'] as num).toDouble();
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: FoodItemCard(
                 name: food['name'],
-                calories: (food['calories'] as num).toDouble(),
-                amount: (food['amount'] as num?)?.toDouble(),
+                calories: displayCalories,
+                amount: (food['lastAmount'] as num?)?.toDouble() ??
+                    (food['amount'] as num?)?.toDouble(),
                 unit: food['unit'],
                 onTap: () => _showFoodDetail(food),
               ),

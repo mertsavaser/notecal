@@ -58,13 +58,35 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
   }
 
   void _initializeBaseValues() {
-    // Get base values from food data (assuming per 100g or per serving)
-    _baseCalories = (widget.food['calories'] as num?)?.toDouble() ?? 0.0;
-    _baseProtein = (widget.food['protein'] as num?)?.toDouble() ?? 0.0;
-    _baseCarbs = (widget.food['carbs'] as num?)?.toDouble() ?? 0.0;
-    _baseFat = (widget.food['fat'] as num?)?.toDouble() ?? 0.0;
-    _baseServingSize =
-        (widget.food['serving_size'] as num?)?.toDouble() ?? 100.0;
+    // Check if this is a recent food (has per100 values + lastAmount)
+    final isRecent = widget.food['isRecent'] == true;
+
+    if (isRecent) {
+      // Recent food: use per100 values and prefill with lastAmount
+      _baseCalories =
+          (widget.food['caloriesPer100'] as num?)?.toDouble() ?? 0.0;
+      _baseProtein = (widget.food['proteinPer100'] as num?)?.toDouble() ?? 0.0;
+      _baseCarbs = (widget.food['carbsPer100'] as num?)?.toDouble() ?? 0.0;
+      _baseFat = (widget.food['fatPer100'] as num?)?.toDouble() ?? 0.0;
+      _baseServingSize = 100.0; // Always per 100g for recent foods
+
+      // Prefill amount with lastAmount
+      final lastAmount =
+          (widget.food['lastAmount'] as num?)?.toDouble() ?? 100.0;
+      _amount = lastAmount;
+      _amountController.text = lastAmount.toStringAsFixed(0);
+    } else {
+      // Search food: use per 100g or per serving values
+      _baseCalories = (widget.food['calories'] as num?)?.toDouble() ?? 0.0;
+      _baseProtein = (widget.food['protein'] as num?)?.toDouble() ?? 0.0;
+      _baseCarbs = (widget.food['carbs'] as num?)?.toDouble() ?? 0.0;
+      _baseFat = (widget.food['fat'] as num?)?.toDouble() ?? 0.0;
+      _baseServingSize =
+          (widget.food['serving_size'] as num?)?.toDouble() ?? 100.0;
+      // Default amount is serving_size for search foods
+      _amount = _baseServingSize;
+      _amountController.text = _amount.toStringAsFixed(0);
+    }
   }
 
   void _onAmountChanged() {
@@ -118,6 +140,19 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
 
     try {
       final today = _mealService.getTodayDate();
+      // Pass per100 values for Recent food storage
+      // For search foods, calculate per100 from base values
+      // For recent foods, use the stored per100 values
+      final isRecent = widget.food['isRecent'] == true;
+      final caloriesPer100 =
+          isRecent ? _baseCalories : (_baseCalories / _baseServingSize * 100.0);
+      final proteinPer100 =
+          isRecent ? _baseProtein : (_baseProtein / _baseServingSize * 100.0);
+      final carbsPer100 =
+          isRecent ? _baseCarbs : (_baseCarbs / _baseServingSize * 100.0);
+      final fatPer100 =
+          isRecent ? _baseFat : (_baseFat / _baseServingSize * 100.0);
+
       final foodId = await _mealService.addFood(
         date: today,
         mealId: widget.mealId,
@@ -128,6 +163,16 @@ class _FoodDetailBottomSheetState extends State<FoodDetailBottomSheet> {
         protein: _calculatedProtein,
         carbs: _calculatedCarbs,
         fat: _calculatedFat,
+        // Always pass per100 values for proper Recent storage
+        caloriesPer100: caloriesPer100,
+        proteinPer100: proteinPer100,
+        carbsPer100: carbsPer100,
+        fatPer100: fatPer100,
+        // Pass foodId and sourceType if available (from search foods)
+        foodId:
+            widget.food['id'] as String? ?? widget.food['foodId'] as String?,
+        sourceType: widget.food['sourceType'] as String? ??
+            (widget.food['id'] != null ? 'system' : null),
       );
 
       if (mounted) {

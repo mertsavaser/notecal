@@ -6,6 +6,13 @@ import 'package:notecal/core/firestore_helper.dart';
 import 'package:notecal/l10n/app_localizations.dart';
 import 'package:notecal/models/user_profile.dart';
 import 'package:notecal/services/target_calculator.dart';
+import 'package:flutter/foundation.dart';
+import 'package:notecal/bottom_sheets/export_data_bottom_sheet.dart';
+import 'package:notecal/bottom_sheets/add_widget_bottom_sheet.dart';
+import 'package:notecal/bottom_sheets/reminder_time_bottom_sheet.dart';
+import 'package:notecal/services/notification_service.dart';
+import 'package:notecal/services/fresh_install_service.dart';
+import 'package:app_settings/app_settings.dart';
 import 'edit_profile_screen.dart';
 
 /// Profile screen in view-only mode.
@@ -19,8 +26,11 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with WidgetsBindingObserver {
   bool _isLoadingProfile = true;
+  bool _reminderEnabled = false;
+  TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 30);
 
   // Profile data
   UserProfile? _userProfile;
@@ -37,7 +47,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadProfile();
+    _loadReminderSettings();
+    _checkAndAutoEnableReminder();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When app resumes, check if permission was granted and auto-enable if needed
+    if (state == AppLifecycleState.resumed) {
+      _checkAndAutoEnableReminder();
+    }
+  }
+
+  /// Check permission and auto-enable reminder if needed
+  Future<void> _checkAndAutoEnableReminder() async {
+    try {
+      final hasPermission = await NotificationService.getPermissionStatus();
+      if (hasPermission) {
+        // Permission granted - auto-enable if user hasn't set preference
+        await NotificationService.autoEnableIfNeeded();
+        // Reload settings to reflect any changes
+        await _loadReminderSettings();
+      }
+    } catch (e) {
+      // Non-critical
+    }
+  }
+
+  /// Load reminder settings from SharedPreferences
+  Future<void> _loadReminderSettings() async {
+    final enabled = await NotificationService.isReminderEnabled();
+    final time = await NotificationService.getReminderTime();
+    if (mounted) {
+      setState(() {
+        _reminderEnabled = enabled;
+        _reminderTime = time;
+      });
+    }
   }
 
   /// Load user profile from Firestore
@@ -60,7 +115,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      print('[ProfileScreen] Error loading profile: $e');
+      if (kDebugMode) {
+        debugPrint('[ProfileScreen] Error loading profile: $e');
+      }
       if (mounted) {
         setState(() {
           _isLoadingProfile = false;
@@ -172,9 +229,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute(builder: (context) => const EditProfileScreen()),
     );
 
-    if (result == true) {
-      _loadProfile();
-    }
+    // Always reload profile when returning (photo might have changed)
+    _loadProfile();
   }
 
   @override
@@ -205,6 +261,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
         actions: [
           IconButton(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const ExportDataBottomSheet(),
+              );
+            },
+            icon: const Icon(Icons.download, color: Color(0xFF4A90E2)),
+            tooltip: 'Export Data',
+          ),
+          IconButton(
             onPressed: _signOut,
             icon: const Icon(Icons.logout, color: Colors.red),
           ),
@@ -223,6 +291,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildBodyStatsCard(t),
             const SizedBox(height: 16),
             _buildActivityCard(t),
+            const SizedBox(height: 16),
+            _buildReminderSettingsCard(),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -246,6 +316,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: OutlinedButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const AddWidgetBottomSheet(),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF4A90E2), width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.widgets, color: Color(0xFF4A90E2), size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Add Widget',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4A90E2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             TextButton(
               onPressed: _deleteAccount,
@@ -262,20 +368,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileHeader(AppLocalizations t) {
+    // Get photo URL from profile or Firebase Auth as fallback
+    final photoURL =
+        _userProfile?.photoURL ?? FirebaseAuth.instance.currentUser?.photoURL;
+
     return Column(
       children: [
-        Container(
-          width: 100,
-          height: 100,
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.person,
-            size: 50,
-            color: Colors.grey,
-          ),
+        CircleAvatar(
+          radius: 50,
+          backgroundColor: Colors.grey[200],
+          backgroundImage: photoURL != null ? NetworkImage(photoURL) : null,
+          child: photoURL == null
+              ? const Icon(
+                  Icons.person,
+                  size: 50,
+                  color: Colors.grey,
+                )
+              : null,
         ),
         const SizedBox(height: 16),
         Text(
@@ -541,6 +650,173 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildReminderSettingsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F8F8),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Daily Reminder',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+              Switch(
+                value: _reminderEnabled,
+                onChanged: (value) async {
+                  if (value) {
+                    // User wants to enable - check permission
+                    final hasPermission =
+                        await NotificationService.getPermissionStatus();
+
+                    if (!hasPermission) {
+                      // Request permission
+                      final granted =
+                          await NotificationService.requestPermission();
+
+                      if (!granted) {
+                        // Permission denied - show dialog and keep toggle OFF
+                        if (mounted) {
+                          await _showPermissionDeniedDialog();
+                        }
+                        return; // Don't enable
+                      }
+                    }
+
+                    // Permission granted - enable
+                    final success =
+                        await NotificationService.setReminderEnabled(true);
+                    if (success && mounted) {
+                      setState(() {
+                        _reminderEnabled = true;
+                      });
+                    }
+                  } else {
+                    // User wants to disable
+                    await NotificationService.setReminderEnabled(false);
+                    if (mounted) {
+                      setState(() {
+                        _reminderEnabled = false;
+                      });
+                    }
+                  }
+                },
+                activeColor: const Color(0xFF4A90E2),
+              ),
+            ],
+          ),
+          if (_reminderEnabled) ...[
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: _reminderEnabled
+                  ? () async {
+                      // Show premium time picker bottom sheet
+                      await showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => ReminderTimeBottomSheet(
+                          initialTime: _reminderTime,
+                          onTimeSelected: (newTime) async {
+                            setState(() {
+                              _reminderTime = newTime;
+                            });
+                            await NotificationService.setReminderTime(newTime);
+                          },
+                        ),
+                      );
+                    }
+                  : null,
+              child: Opacity(
+                opacity: _reminderEnabled ? 1.0 : 0.5,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Reminder Time',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                      Text(
+                        _reminderTime.format(context),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: _reminderEnabled
+                              ? const Color(0xFF4A90E2)
+                              : Colors.grey[400]!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "We'll remind you if you haven't logged anything today.",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Show permission denied dialog with option to open Settings
+  Future<void> _showPermissionDeniedDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Notifications Disabled'),
+          content: const Text(
+            'Enable notifications in Settings to use daily reminders.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Open Settings'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                AppSettings.openAppSettings();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

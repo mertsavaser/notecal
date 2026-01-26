@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 
 /// Service for handling Google Sign-In with Firebase.
 ///
@@ -14,7 +15,9 @@ class GoogleAuthService {
   /// Throws [Exception] with a readable message on failure.
   static Future<UserCredential?> signInWithGoogle() async {
     try {
-      print('[GoogleAuthService] Starting Google Sign-In flow...');
+      if (kDebugMode) {
+        debugPrint('[GoogleAuthService] Starting Google Sign-In flow...');
+      }
 
       // Initialize Google Sign-In instance
       // Note: GIDClientID should be set in Info.plist or configured programmatically
@@ -26,19 +29,28 @@ class GoogleAuthService {
       );
 
       // Trigger the Google Sign-In flow
-      print('[GoogleAuthService] Requesting user sign-in...');
+      if (kDebugMode) {
+        debugPrint('[GoogleAuthService] Requesting user sign-in...');
+      }
       final googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
         // User canceled the sign-in
-        print('[GoogleAuthService] User canceled the sign-in');
+        if (kDebugMode) {
+          debugPrint('[GoogleAuthService] User canceled the sign-in');
+        }
         return null;
       }
 
-      print('[GoogleAuthService] User signed in: ${googleUser.email}');
+      if (kDebugMode) {
+        debugPrint('[GoogleAuthService] User signed in: ${googleUser.email}');
+      }
 
       // Obtain the auth details from the request
-      print('[GoogleAuthService] Obtaining authentication credentials...');
+      if (kDebugMode) {
+        debugPrint(
+            '[GoogleAuthService] Obtaining authentication credentials...');
+      }
       final googleAuth = await googleUser.authentication;
 
       // Validate that we have required tokens
@@ -49,7 +61,9 @@ class GoogleAuthService {
         );
       }
 
-      print('[GoogleAuthService] Creating Firebase credential...');
+      if (kDebugMode) {
+        debugPrint('[GoogleAuthService] Creating Firebase credential...');
+      }
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -58,7 +72,9 @@ class GoogleAuthService {
       );
 
       // Sign in to Firebase with the Google credential
-      print('[GoogleAuthService] Signing in to Firebase...');
+      if (kDebugMode) {
+        debugPrint('[GoogleAuthService] Signing in to Firebase...');
+      }
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
 
@@ -66,16 +82,20 @@ class GoogleAuthService {
         throw Exception('Firebase sign-in returned null user');
       }
 
-      print(
-        '[GoogleAuthService] Successfully signed in: ${userCredential.user!.uid}',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '[GoogleAuthService] Successfully signed in: ${userCredential.user!.uid}',
+        );
+      }
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      print('[GoogleAuthService] Firebase Auth Error:');
-      print('  Code: ${e.code}');
-      print('  Message: ${e.message}');
-      print('  Details: ${e.toString()}');
+      if (kDebugMode) {
+        debugPrint('[GoogleAuthService] Firebase Auth Error:');
+        debugPrint('  Code: ${e.code}');
+        debugPrint('  Message: ${e.message}');
+        debugPrint('  Details: ${e.toString()}');
+      }
 
       String errorMessage = 'Google Sign-In failed';
 
@@ -104,9 +124,11 @@ class GoogleAuthService {
       // Rethrow with a readable message
       throw Exception(errorMessage);
     } catch (e) {
-      print('[GoogleAuthService] General Error:');
-      print('  Type: ${e.runtimeType}');
-      print('  Message: ${e.toString()}');
+      if (kDebugMode) {
+        debugPrint('[GoogleAuthService] General Error:');
+        debugPrint('  Type: ${e.runtimeType}');
+        debugPrint('  Message: ${e.toString()}');
+      }
 
       // Rethrow with a readable message
       throw Exception('Google Sign-In failed: ${e.toString()}');

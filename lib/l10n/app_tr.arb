@@ -16,7 +16,8 @@
   "login": "Giriş Yap",
   "or": "veya",
   "continueWithGoogle": "Google ile devam et",
-  "appleSignIn": "Apple ile giriş",
+  "appleSignIn": "Apple ile giriş yap",
+  "welcome": "Hoş geldin",
   "dontHaveAccount": "Hesabınız yok mu? ",
   "signUp": "Kayıt Ol",
   "createAccount": "Hesap Oluştur",
@@ -205,5 +206,6 @@
   "deleteAccountConfirmationTitle": "Hesabı Sil",
   "deleteAccountConfirmationMessage": "Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
   "accountDeleted": "Hesap başarıyla silindi",
-  "errorDeletingAccount": "Hesap silinirken hata: {error}"
+  "errorDeletingAccount": "Hesap silinirken hata: {error}",
+  "networkTimeout": "Ağ zaman aşımı. Lütfen tekrar deneyin."
 }

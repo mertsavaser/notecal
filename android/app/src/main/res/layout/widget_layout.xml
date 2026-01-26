@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <!-- TODAY Section -->
+    <TextView
+        android:id="@+id/widget_today_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TODAY"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="#808080"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Calories -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+        <TextView
+            android:id="@+id/widget_calories_consumed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A1A" />
+        <TextView
+            android:id="@+id/widget_calories_goal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="/ 2000"
+            android:textSize="20sp"
+            android:textColor="#808080"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+    <!-- Meals, Exercise, Note -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+        <TextView
+            android:id="@+id/widget_meals_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Not logged"
+            android:textSize="12sp"
+            android:textColor="#808080" />
+        <TextView
+            android:id="@+id/widget_exercise_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="—"
+            android:textSize="12sp"
+            android:textColor="#808080"
+            android:layout_marginStart="12dp" />
+        <ImageView
+            android:id="@+id/widget_note_icon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@android:drawable/ic_menu_edit"
+            android:layout_marginStart="12dp"
+            android:visibility="gone"
+            android:contentDescription="Note" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="12dp" />
+
+    <!-- THIS WEEK Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="THIS WEEK"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#808080" />
+        <TextView
+            android:id="@+id/widget_week_logged"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0/7"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A1A" />
+    </LinearLayout>
+
+</LinearLayout>

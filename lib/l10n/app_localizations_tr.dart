@@ -60,7 +60,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get continueWithGoogle => 'Google ile devam et';
 
   @override
-  String get appleSignIn => 'Apple ile giriş';
+  String get appleSignIn => 'Apple ile giriş yap';
+
+  @override
+  String get welcome => 'Hoş geldin';
 
   @override
   String get dontHaveAccount => 'Hesabınız yok mu? ';
@@ -656,4 +659,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String errorDeletingAccount(Object error) {
     return 'Hesap silinirken hata: $error';
   }
+
+  @override
+  String get networkTimeout => 'Ağ zaman aşımı. Lütfen tekrar deneyin.';
 }

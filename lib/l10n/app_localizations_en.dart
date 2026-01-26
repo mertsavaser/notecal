@@ -60,7 +60,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueWithGoogle => 'Continue with Google';
 
   @override
-  String get appleSignIn => 'Apple ile giriş';
+  String get appleSignIn => 'Sign in with Apple';
+
+  @override
+  String get welcome => 'Welcome';
 
   @override
   String get dontHaveAccount => 'Don\'t have an account? ';
@@ -652,4 +655,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String errorDeletingAccount(Object error) {
     return 'Error deleting account: $error';
   }
+
+  @override
+  String get networkTimeout => 'Network timeout. Please try again.';
 }
