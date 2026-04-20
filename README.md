@@ -46,10 +46,10 @@ The goal was not to build a complex fitness app, but a **clean, usable product t
 ---
 
 ## 📸 Screenshots
-
-<img width="370" height="800" alt="400x800bb" src="https://github.com/user-attachments/assets/8ec3c67f-3a82-4ee8-a678-01e4556f8edc" />
 <img width="370" height="800" alt="cınss" src="https://github.com/user-attachments/assets/77ebda72-334e-4980-a705-be6003830bb6" />
-<img width="370" height="800" alt="cınss" src="https://github.com/user-attachments/assets/d7ba4f06-fca8-42b4-b107-7fdeaae5fa11" />
+<img width="370" height="800" alt="400x800bb" src="https://github.com/user-attachments/assets/8ec3c67f-3a82-4ee8-a678-01e4556f8edc" />
+<img width="370" height="800" alt="note" src="https://github.com/user-attachments/assets/773a5cea-abf0-4b14-8324-b8933e6dcb03" />
+
 
 
 ---
